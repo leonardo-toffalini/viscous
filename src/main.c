@@ -5,8 +5,8 @@
 #define N_ 100
 #define SIZE_ ((N_+2)*(N_+2))
 #define IX(i, j) ((i)+(N_+2)*(j))
-// Stam: #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
-#define SWAP(x, y) do { float *tmp = (x); (x) = (y); (y) = tmp; } while (0)
+#define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
+// #define SWAP(x, y) do { float *tmp = (x); (x) = (y); (y) = tmp; } while (0)
 
 void add_source(int N, float *x, float *s, float dt) {
   int size = (N+2)*(N+2);
@@ -172,10 +172,12 @@ int main(void) {
   zero_all(N, dens, dens_prev, u, u_prev, v, v_prev);
   set_all(N, u, 0.02f);
   set_all(N, v, 0.04f);
+  // set_all(N, u_prev, 0.02f);
+  // set_all(N, v_prev, 0.04f);
 
   float dt;
   const float diff = 1e-4;
-  const float visc = 0.01f;
+  const float visc = 1e-4;
 
   InitWindow(screenWidth, screenHeight, "Fluid!");
 
@@ -200,9 +202,13 @@ int main(void) {
 
     // dens_prev[IX(N/2, N/2)] += 0.1f;
     set_all(N, dens_prev, 0.0f);
-    dens_prev[IX(N/2, N/2)] = 10.0f;
+    // set_all(N, u, 0.02f);
+    // set_all(N, v, 0.04f);
+    dens_prev[IX(N/2, N/2)] = 50.0f;
+    u[IX(N/2, N/2)] = 0.2f;
+    v[IX(N/2, N/2)] = 1.8f;
 
-    // vel_step(N, u, v, u_prev, v_prev, visc, dt);
+    vel_step(N, u, v, u_prev, v_prev, visc, dt);
     dens_step(N, dens, dens_prev, u, v, diff, dt);
     
     // diffuse(N, 0, dens, dens_prev, diff, dt);
