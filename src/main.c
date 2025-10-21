@@ -1,10 +1,12 @@
 #include "raylib.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 #define N_ 120
 #define SIZE_ ((N_+2)*(N_+2))
 #define IX(i, j) ((i)+(N_+2)*(j))
-#define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
+// Stam: #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
+#define SWAP(x, y) do { float *tmp = (x); (x) = (y); (y) = tmp; } while (0)
 
 void add_source(int N, float *x, float *s, float dt) {
   int size = (N+2)*(N+2);
@@ -126,25 +128,7 @@ void vel_step(int N, float *u, float*v, float *u0, float *v0, float visc, float 
   project(N, u, v, u0, v0);
 }
 
-void clamp() {
-
-}
-
-int main(void) {
-  const int screenWidth = 800;
-  const int screenHeight = 450;
-  const int imgWidth = 128;
-  const int imgHeight = 128;
-
-  const int N = N_;
-  static float u[SIZE_], v[SIZE_], u_prev[SIZE_], v_prev[SIZE_];
-  static float dens[SIZE_], dens_prev[SIZE_];
-  float dt;
-  float visc = 0.01f;
-  float diff = 1e-8;
-
-  InitWindow(screenWidth, screenHeight, "Fluid!");
-
+void zero_all(int N, float *dens, float* dens_prev, float *u, float *u_prev, float *v, float *v_prev) {
   for (int i = 0; i <= N+2; i++) {
     for (int j = 0; j <= N+2; j++) {
       dens[IX(i, j)] = 0;
@@ -155,28 +139,51 @@ int main(void) {
       v_prev[IX(i, j)] = 0;
     }
   }
+}
 
+void swap_arrays(float *a, float *b, size_t n) {
+    for (size_t i = 0; i < n; i++) {
+        float tmp = a[i];
+        a[i] = b[i];
+        b[i] = tmp;
+    }
+}
+
+int main(void) {
+  const int N = N_;
+  const float scale = 5.0f;
+  const int screenWidth = scale * (N + 2);
+  const int screenHeight = scale * (N + 2);
+  const int imgWidth = N+2;
+  const int imgHeight = N+2;
+
+  static float u[SIZE_], v[SIZE_], u_prev[SIZE_], v_prev[SIZE_];
+
+  static float dens[SIZE_], dens_prev[SIZE_];
+
+  zero_all(N, dens, dens_prev, u, u_prev, v, v_prev);
   dens[IX(N/2, N/2)] = 1.0f;
 
-  unsigned char *pixels = malloc(imgWidth * imgHeight);
-  for (int y = 0; y < imgHeight; y++) {
-      for (int x = 0; x < imgWidth; x++) {
-          pixels[y * imgWidth + x] = (unsigned char)((x + y) % 256);
-      }
-  }
+  float dt;
+  const float diff = 1e-4;
+  const float visc = 0.01f;
+
+  InitWindow(screenWidth, screenHeight, "Fluid!");
 
   Image img = {
-      .data = dens, // pixels
-      .width = N+2,  // img Width
-      .height = N+2,  // imgHeight
+      .data = dens,
+      .width = imgWidth,
+      .height = imgHeight,
       .format = PIXELFORMAT_UNCOMPRESSED_R32,  // x in [0.0f, 1.0f], 32 bit float, 1 channel
       .mipmaps = 1
   };
 
   Texture2D texture = LoadTextureFromImage(img);
-  // UnloadImage(img); // texture is now on the GPU, image no longer needed
 
-  SetTargetFPS(60);
+  char grid_size_buffer[100];
+  sprintf(grid_size_buffer, "N=%d", N);
+
+  SetTargetFPS(120);
 
   while (!WindowShouldClose()) {
     double time = GetTime() * 100;
@@ -184,29 +191,32 @@ int main(void) {
 
     // vel_step(N, u, v, u_prev, v_prev, visc, dt);
     // dens_step(N, dens, dens_prev, u, v, diff, dt);
-    diffuse(N, 0, dens_prev, dens, diff, dt);
+    // diffuse_bad(N, 0, dens_prev, dens, diff, 1.0f);
+    
+    dens_prev[IX(N/2, N/2)] += 0.1f;
+    diffuse(N, 0, dens, dens_prev, diff, dt);
+    swap_arrays(dens, dens_prev, SIZE_);
+    
+    // test 
+    // int i = ((int)rand()) % (N+2);
+    // int j = ((int)rand()) % (N+2);
+    // dens[IX(i, j)] = 1.0f;
 
-    for (int y = 0; y < imgHeight; y++) {
-      for (int x = 0; x < imgWidth; x++) {
-        pixels[y * imgWidth + x] = (unsigned char)((x + y + (int)time) % 256);
-      }
-    }
-
-    UpdateTexture(texture, dens);  // pixels
+    UpdateTexture(texture, dens);
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
     DrawTextureEx(texture,
-                  (Vector2){ (screenWidth - imgWidth * 3) / 2.0f,
-                              (screenHeight - imgHeight * 3) / 2.0f },
-                  0.0f, 3.0f, WHITE);
+                  (Vector2){0, 0},
+                  0.0f, scale, WHITE);
     DrawFPS(10, 10);
+    DrawText(grid_size_buffer, scale * N - 50, 10, 20, RAYWHITE);
     EndDrawing();
   }
 
   UnloadTexture(texture);
-  free(pixels);
   CloseWindow();
+
   return 0;
 }
 
