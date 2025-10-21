@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define N_ 120
+#define N_ 100
 #define SIZE_ ((N_+2)*(N_+2))
 #define IX(i, j) ((i)+(N_+2)*(j))
 // Stam: #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
@@ -128,6 +128,14 @@ void vel_step(int N, float *u, float*v, float *u0, float *v0, float visc, float 
   project(N, u, v, u0, v0);
 }
 
+void set_all(int N, float *x, float val) {
+  for (int i = 0; i <= N+2; i++) {
+    for (int j = 0; j <= N+2; j++) {
+      x[IX(i, j)] = val;
+    }
+  }
+}
+
 void zero_all(int N, float *dens, float* dens_prev, float *u, float *u_prev, float *v, float *v_prev) {
   for (int i = 0; i <= N+2; i++) {
     for (int j = 0; j <= N+2; j++) {
@@ -162,7 +170,8 @@ int main(void) {
   static float dens[SIZE_], dens_prev[SIZE_];
 
   zero_all(N, dens, dens_prev, u, u_prev, v, v_prev);
-  dens[IX(N/2, N/2)] = 1.0f;
+  set_all(N, u, 0.02f);
+  set_all(N, v, 0.04f);
 
   float dt;
   const float diff = 1e-4;
@@ -183,19 +192,21 @@ int main(void) {
   char grid_size_buffer[100];
   sprintf(grid_size_buffer, "N=%d", N);
 
-  SetTargetFPS(120);
+  SetTargetFPS(60);
 
   while (!WindowShouldClose()) {
     double time = GetTime() * 100;
     dt = GetFrameTime();
 
+    // dens_prev[IX(N/2, N/2)] += 0.1f;
+    set_all(N, dens_prev, 0.0f);
+    dens_prev[IX(N/2, N/2)] = 10.0f;
+
     // vel_step(N, u, v, u_prev, v_prev, visc, dt);
-    // dens_step(N, dens, dens_prev, u, v, diff, dt);
-    // diffuse_bad(N, 0, dens_prev, dens, diff, 1.0f);
+    dens_step(N, dens, dens_prev, u, v, diff, dt);
     
-    dens_prev[IX(N/2, N/2)] += 0.1f;
-    diffuse(N, 0, dens, dens_prev, diff, dt);
-    swap_arrays(dens, dens_prev, SIZE_);
+    // diffuse(N, 0, dens, dens_prev, diff, dt);
+    // swap_arrays(dens, dens_prev, SIZE_);
     
     // test 
     // int i = ((int)rand()) % (N+2);
@@ -210,7 +221,7 @@ int main(void) {
                   (Vector2){0, 0},
                   0.0f, scale, WHITE);
     DrawFPS(10, 10);
-    DrawText(grid_size_buffer, scale * N - 50, 10, 20, RAYWHITE);
+    DrawText(grid_size_buffer, scale * N - 60, 10, 20, RAYWHITE);
     EndDrawing();
   }
 
