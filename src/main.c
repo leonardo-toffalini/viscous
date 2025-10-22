@@ -3,17 +3,18 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#define N_ 100
+#define N_ 200
 #define SIZE_ ((N_+2)*(N_+2))
 #define IX(i, j) ((i)+(N_+2)*(j))
 #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
 
+// implemented in src/kernels.cu
 extern void scalar_multiplier(float *A, size_t rows, size_t cols, float c);
+extern void mat_add(float *A_h, float *B_h, size_t rows, size_t cols, float dt);
+extern void diffuse_bad_host(float *A_h, float *B_h, size_t rows, size_t cols, float a);
 
 void add_source(int N, float *x, float *s, float dt) {
-  int size = (N+2)*(N+2);
-  for (int i = 0; i < size; i++)
-    x[i] += dt * s[i];
+  mat_add(x, s, N+2, N+2, dt);
 }
 
 void set_bnd(int N, int b, float *x) {
@@ -32,11 +33,13 @@ void set_bnd(int N, int b, float *x) {
 void diffuse_bad(int N, int b, float *x, float *x0, float diff, float dt) {
   float a = dt * diff * N * N;
 
-  for (int i = 1; i <= N; i++) {
-    for (int j = 1; j <= N; j++) {
-      x[IX(i, j)] = x0[IX(i, j)] + a * (x0[IX(i-1, j)] + x0[IX(i+1, j)] + x0[IX(i, j-1)] + x0[IX(i, j+1)] - 4 * x0[IX(i, j)]);
-    }
-  }
+  diffuse_bad_host(x, x0, N+2, N+2, a);
+
+  // for (int i = 1; i <= N; i++) {
+  //   for (int j = 1; j <= N; j++) {
+  //     x[IX(i, j)] = x0[IX(i, j)] + a * (x0[IX(i-1, j)] + x0[IX(i+1, j)] + x0[IX(i, j-1)] + x0[IX(i, j+1)] - 4 * x0[IX(i, j)]);
+  //   }
+  // }
   set_bnd(N, b, x);
 }
 
@@ -116,7 +119,7 @@ void project(int N, float *u, float *v, float *p, float *div) {
 
 void dens_step(int N, float *x, float *x0, float *u, float *v, float diff, float dt) {
   add_source(N, x, x0, dt);
-  SWAP(x0, x); diffuse(N, 0, x, x0, diff, dt);
+  SWAP(x0, x); diffuse_bad(N, 0, x, x0, diff, dt);
   SWAP(x0, x); advect(N, 0, x, x0, u, v, dt);
 }
 
@@ -160,17 +163,9 @@ void zero_all(int N, float *dens, float* dens_prev, float *u, float *u_prev, flo
   }
 }
 
-void swap_arrays(float *a, float *b, size_t n) {
-    for (size_t i = 0; i < n; i++) {
-        float tmp = a[i];
-        a[i] = b[i];
-        b[i] = tmp;
-    }
-}
-
 int main(void) {
   const int N = N_;
-  const float scale = 5.0f;
+  const float scale = 3.0f;
   const int screenWidth = scale * (N + 2) + 2;
   const int screenHeight = scale * (N + 2) + 2;
   const int imgWidth = N+2;
@@ -203,7 +198,6 @@ int main(void) {
   SetTargetFPS(60);
 
   while (!WindowShouldClose()) {
-    double time = GetTime() * 100;
     dt = GetFrameTime();
 
     // dens_prev[IX(N/2, N/2)] += 0.1f;
@@ -211,11 +205,11 @@ int main(void) {
     scalar_multiplier(dens_prev, N+2, N+2, 0.0f);
     for (int ioff = -1; ioff <= 1; ioff++) {
       for (int joff = -1; joff <= 1; joff++) {
-        dens_prev[IX(N/2 + ioff, N/2 + joff)] = 12.0f;
+        dens_prev[IX(N/2 + ioff, N/2 + joff)] = 10.0f;
       }
     }
-    u[IX(N/2, N/2)] = 0.2f;
-    v[IX(N/2, N/2)] = 1.8f;
+    u[IX(N/2, N/2)] = 0.0f;
+    v[IX(N/2, N/2)] = 0.0f;
 
     vel_step(N, u, v, u_prev, v_prev, visc, dt);
     dens_step(N, dens, dens_prev, u, v, diff, dt);
