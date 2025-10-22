@@ -236,13 +236,14 @@ language("C++")
 location("build_files/")
 targetdir("../bin/%{cfg.buildcfg}/cuda")
 
-files({ "src/**.cu" })
+files({ "../src/kernels.cu" })
+objdir("%{prj.location}/obj/%{cfg.platform}/%{cfg.buildcfg}/%{prj.name}")
 
 -- Tell Premake to treat .cu files with nvcc
 -- We use a custom build command for .cu files to call nvcc
 filter({ "files:**.cu" })
 buildcommands({
-	"nvcc -c %{file.relpath} -o %{cfg.objdir}/%{file.basename}.o",
+	"nvcc -c %{file.abspath} -o %{cfg.objdir}/%{file.basename}.o",
 })
 buildoutputs({ "%{cfg.objdir}/%{file.basename}.o" })
 

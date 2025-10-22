@@ -1,11 +1,14 @@
 #include "raylib.h"
 #include <stdlib.h>
+#include <stddef.h>
 #include <stdio.h>
 
 #define N_ 100
 #define SIZE_ ((N_+2)*(N_+2))
 #define IX(i, j) ((i)+(N_+2)*(j))
 #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
+
+extern void scalar_multiplier(float *A, size_t rows, size_t cols, float c);
 
 void add_source(int N, float *x, float *s, float dt) {
   int size = (N+2)*(N+2);
@@ -204,7 +207,8 @@ int main(void) {
     dt = GetFrameTime();
 
     // dens_prev[IX(N/2, N/2)] += 0.1f;
-    set_all(N, dens_prev, 0.0f);
+    // set_all(N, dens_prev, 0.0f);
+    scalar_multiplier(dens_prev, N+2, N+2, 0.0f);
     for (int ioff = -1; ioff <= 1; ioff++) {
       for (int joff = -1; joff <= 1; joff++) {
         dens_prev[IX(N/2 + ioff, N/2 + joff)] = 12.0f;
