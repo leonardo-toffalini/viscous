@@ -6,7 +6,6 @@
 #define SIZE_ ((N_+2)*(N_+2))
 #define IX(i, j) ((i)+(N_+2)*(j))
 #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
-// #define SWAP(x, y) do { float *tmp = (x); (x) = (y); (y) = tmp; } while (0)
 
 void add_source(int N, float *x, float *s, float dt) {
   int size = (N+2)*(N+2);
@@ -129,10 +128,19 @@ void vel_step(int N, float *u, float*v, float *u0, float *v0, float visc, float 
 }
 
 void set_all(int N, float *x, float val) {
-  for (int i = 0; i <= N+2; i++) {
-    for (int j = 0; j <= N+2; j++) {
+  for (int i = 0; i < N+2; i++) {
+    for (int j = 0; j < N+2; j++) {
       x[IX(i, j)] = val;
     }
+  }
+}
+
+void zero_boundary(int N, float *x) {
+  for (int i = 0; i < N+2; i++) {
+    x[IX(i, 0)] = 0;
+    x[IX(0, i)] = 0;
+    x[IX(i, N+1)] = 0;
+    x[IX(N+1, i)] = 0;
   }
 }
 
@@ -160,20 +168,15 @@ void swap_arrays(float *a, float *b, size_t n) {
 int main(void) {
   const int N = N_;
   const float scale = 5.0f;
-  const int screenWidth = scale * (N + 2);
-  const int screenHeight = scale * (N + 2);
+  const int screenWidth = scale * (N + 2) + 2;
+  const int screenHeight = scale * (N + 2) + 2;
   const int imgWidth = N+2;
   const int imgHeight = N+2;
 
   static float u[SIZE_], v[SIZE_], u_prev[SIZE_], v_prev[SIZE_];
-
   static float dens[SIZE_], dens_prev[SIZE_];
 
   zero_all(N, dens, dens_prev, u, u_prev, v, v_prev);
-  set_all(N, u, 0.02f);
-  set_all(N, v, 0.04f);
-  // set_all(N, u_prev, 0.02f);
-  // set_all(N, v_prev, 0.04f);
 
   float dt;
   const float diff = 1e-4;
@@ -185,7 +188,7 @@ int main(void) {
       .data = dens,
       .width = imgWidth,
       .height = imgHeight,
-      .format = PIXELFORMAT_UNCOMPRESSED_R32,  // x in [0.0f, 1.0f], 32 bit float, 1 channel
+      .format = PIXELFORMAT_UNCOMPRESSED_R32,  // x in [0.0f, 1.0f], 32 bit float, 1 channel (red)
       .mipmaps = 1
   };
 
@@ -202,29 +205,23 @@ int main(void) {
 
     // dens_prev[IX(N/2, N/2)] += 0.1f;
     set_all(N, dens_prev, 0.0f);
-    // set_all(N, u, 0.02f);
-    // set_all(N, v, 0.04f);
-    dens_prev[IX(N/2, N/2)] = 50.0f;
+    for (int ioff = -1; ioff <= 1; ioff++) {
+      for (int joff = -1; joff <= 1; joff++) {
+        dens_prev[IX(N/2 + ioff, N/2 + joff)] = 12.0f;
+      }
+    }
     u[IX(N/2, N/2)] = 0.2f;
     v[IX(N/2, N/2)] = 1.8f;
 
     vel_step(N, u, v, u_prev, v_prev, visc, dt);
     dens_step(N, dens, dens_prev, u, v, diff, dt);
-    
-    // diffuse(N, 0, dens, dens_prev, diff, dt);
-    // swap_arrays(dens, dens_prev, SIZE_);
-    
-    // test 
-    // int i = ((int)rand()) % (N+2);
-    // int j = ((int)rand()) % (N+2);
-    // dens[IX(i, j)] = 1.0f;
 
     UpdateTexture(texture, dens);
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
     DrawTextureEx(texture,
-                  (Vector2){0, 0},
+                  (Vector2){1, 1},
                   0.0f, scale, WHITE);
     DrawFPS(10, 10);
     DrawText(grid_size_buffer, scale * N - 60, 10, 20, RAYWHITE);
