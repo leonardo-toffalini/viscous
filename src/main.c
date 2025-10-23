@@ -2,45 +2,90 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 
 #define N_ 200
 #define SIZE_ ((N_+2)*(N_+2))
 #define IX(i, j) ((i)+(N_+2)*(j))
 #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
 
+// TODO:
+// - add a switch such that if someone is running without nvidia gpu the computations default to cpu
+// - implement jacobi iteration in cuda
+// - implement advect in cuda
+
 // implemented in src/kernels.cu
 extern void scalar_multiplier(float *A, size_t rows, size_t cols, float c);
 extern void mat_add(float *A_h, float *B_h, size_t rows, size_t cols, float dt);
 extern void diffuse_bad_host(float *A_h, float *B_h, size_t rows, size_t cols, float a);
+extern void set_bnd_host(float *A_h, size_t rows, size_t cols, int b);
 
 void add_source(int N, float *x, float *s, float dt) {
   mat_add(x, s, N+2, N+2, dt);
 }
 
 void set_bnd(int N, int b, float *x) {
-  for (int i = 1; i <= N; i++) {
-    x[IX(0,   i  )] = b == 1 ? -x[IX(1, i)] :x[IX(1, i)];
-    x[IX(N+1, i  )] = b == 1 ? -x[IX(N, i)] :x[IX(N, i)];
-    x[IX(i,   0  )] = b == 2 ? -x[IX(i, 1)] :x[IX(i, 1)];
-    x[IX(i,   N+1)] = b == 2 ? -x[IX(i, N)] :x[IX(i, N)];
+  // the CPU version is faster as the GPU version requires copying the array on to the GPUs global memory,
+  // and it does not offset the computational benefit
+  int set_bnd_type = 1;
+
+  switch (set_bnd_type) {
+    // gpu
+    case 0:
+      set_bnd_host(x, N+2, N+2, b);
+      break;
+
+    // cpu
+    case 1:
+    default:
+      for (int i = 1; i <= N; i++) {
+        x[IX(0,   i  )] = b == 1 ? -x[IX(1, i)] :x[IX(1, i)];
+        x[IX(N+1, i  )] = b == 1 ? -x[IX(N, i)] :x[IX(N, i)];
+        x[IX(i,   0  )] = b == 2 ? -x[IX(i, 1)] :x[IX(i, 1)];
+        x[IX(i,   N+1)] = b == 2 ? -x[IX(i, N)] :x[IX(i, N)];
+      }
+      x[IX(0,   0  )] = 0.5f * (x[IX(1,   0)] + x[IX(0,   1)]);
+      x[IX(0,   N+1)] = 0.5f * (x[IX(1, N+1)] + x[IX(0,   N)]);
+      x[IX(N+1, 0  )] = 0.5f * (x[IX(N,   0)] + x[IX(N+1, 1)]);
+      x[IX(N+1, N+1)] = 0.5f * (x[IX(N, N+1)] + x[IX(N+1, N)]);
+      break;
   }
-  x[IX(0,   0  )] = 0.5f * (x[IX(1,   0)] + x[IX(0,   1)]);
-  x[IX(0,   N+1)] = 0.5f * (x[IX(1, N+1)] + x[IX(0,   N)]);
-  x[IX(N+1, 0  )] = 0.5f * (x[IX(N,   0)] + x[IX(N+1, 1)]);
-  x[IX(N+1, N+1)] = 0.5f * (x[IX(N, N+1)] + x[IX(N+1, N)]);
 }
 
 void diffuse_bad(int N, int b, float *x, float *x0, float diff, float dt) {
   float a = dt * diff * N * N;
 
   diffuse_bad_host(x, x0, N+2, N+2, a);
-
-  // for (int i = 1; i <= N; i++) {
-  //   for (int j = 1; j <= N; j++) {
-  //     x[IX(i, j)] = x0[IX(i, j)] + a * (x0[IX(i-1, j)] + x0[IX(i+1, j)] + x0[IX(i, j-1)] + x0[IX(i, j+1)] - 4 * x0[IX(i, j)]);
-  //   }
-  // }
   set_bnd(N, b, x);
+}
+
+void diffuse_jacobi(int N, int b, float* x, const float* x0, float diff, float dt) {
+  const float a = dt * diff * N * N;
+  const int size = (N + 2) * (N + 2);
+
+  float* x_new = (float*)malloc(size * sizeof(float));
+
+  float* x_out = x;      // original output buffer
+  float* cur   = x;      // read buffer (k-th iterate)
+  float* next  = x_new;  // write buffer (k+1-th iterate)
+
+  for (int k = 0; k < 20; ++k) {
+    for (int i = 1; i <= N; ++i) {
+      for (int j = 1; j <= N; ++j) {
+        next[IX(i,j)] = (x0[IX(i,j)] + a * (cur[IX(i-1,j)] + cur[IX(i+1,j)] + cur[IX(i,j-1)] + cur[IX(i,j+1)])) / (1.0f + 4.0f * a);
+      }
+    }
+    set_bnd(N, b, next);
+
+    // swap read/write roles for next iteration
+    SWAP(cur, next);
+  }
+
+  // make sure result ends up in the caller's x buffer
+  if (cur != x_out) {
+    memcpy(x_out, cur, size * sizeof(float));
+  }
+  free(x_new);
 }
 
 void diffuse(int N, int b, float *x, float *x0, float diff, float dt) {
@@ -119,7 +164,7 @@ void project(int N, float *u, float *v, float *p, float *div) {
 
 void dens_step(int N, float *x, float *x0, float *u, float *v, float diff, float dt) {
   add_source(N, x, x0, dt);
-  SWAP(x0, x); diffuse_bad(N, 0, x, x0, diff, dt);
+  SWAP(x0, x); diffuse_jacobi(N, 0, x, x0, diff, dt);
   SWAP(x0, x); advect(N, 0, x, x0, u, v, dt);
 }
 
@@ -177,7 +222,7 @@ int main(void) {
   zero_all(N, dens, dens_prev, u, u_prev, v, v_prev);
 
   float dt;
-  const float diff = 1e-4;
+  const float diff = 2e-4;
   const float visc = 1e-4;
 
   InitWindow(screenWidth, screenHeight, "Fluid!");
@@ -194,6 +239,10 @@ int main(void) {
 
   char grid_size_buffer[100];
   sprintf(grid_size_buffer, "N=%d", N);
+  char diff_buffer[100];
+  sprintf(diff_buffer, "diff=%.0e", diff);
+  char visc_buffer[100];
+  sprintf(visc_buffer, "visc=%.0e", visc);
 
   SetTargetFPS(60);
 
@@ -223,6 +272,8 @@ int main(void) {
                   0.0f, scale, WHITE);
     DrawFPS(10, 10);
     DrawText(grid_size_buffer, scale * N - 60, 10, 20, RAYWHITE);
+    DrawText(diff_buffer, scale * N - 100, scale * N - 35, 20, RAYWHITE);
+    DrawText(visc_buffer, scale * N - 100, scale * N - 15, 20, RAYWHITE);
     EndDrawing();
   }
 
