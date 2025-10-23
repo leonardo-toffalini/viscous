@@ -7,18 +7,23 @@
 #define N_ 200
 #define SIZE_ ((N_+2)*(N_+2))
 #define IX(i, j) ((i)+(N_+2)*(j))
+#ifndef SWAP
 #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
+#endif
 
 // TODO:
 // - add a switch such that if someone is running without nvidia gpu the computations default to cpu
 // - implement jacobi iteration in cuda
 // - implement advect in cuda
+// - add ui input
+// - probably should do something about the possibility when there are less threads than cells in the array
 
 // implemented in src/kernels.cu
 extern void scalar_multiplier(float *A, size_t rows, size_t cols, float c);
 extern void mat_add(float *A_h, float *B_h, size_t rows, size_t cols, float dt);
 extern void diffuse_bad_host(float *A_h, float *B_h, size_t rows, size_t cols, float a);
 extern void set_bnd_host(float *A_h, size_t rows, size_t cols, int b);
+extern void diffuse_jacobi_host(float *A_h, const float *B_h, size_t rows, size_t cols, int b, const float a);
 
 void add_source(int N, float *x, float *s, float dt) {
   mat_add(x, s, N+2, N+2, dt);
@@ -59,33 +64,49 @@ void diffuse_bad(int N, int b, float *x, float *x0, float diff, float dt) {
   set_bnd(N, b, x);
 }
 
-void diffuse_jacobi(int N, int b, float* x, const float* x0, float diff, float dt) {
+void diffuse_jacobi(int N, int b, float *x, const float *x0, float diff, float dt) {
   const float a = dt * diff * N * N;
-  const int size = (N + 2) * (N + 2);
 
-  float* x_new = (float*)malloc(size * sizeof(float));
+  // the gpu version is magnitudes faster than the cpu version
+  // for the gpu version the iteration number k does not change the fps that much
+  // while for the cpu version, increasing k, the fps quickly drops
+  int diffuse_jacobi_type = 0;
 
-  float* x_out = x;      // original output buffer
-  float* cur   = x;      // read buffer (k-th iterate)
-  float* next  = x_new;  // write buffer (k+1-th iterate)
+  switch (diffuse_jacobi_type) {
+    // gpu
+    case 0:
+      diffuse_jacobi_host(x, x0, N+2, N+2, b, a);
+      break;
 
-  for (int k = 0; k < 20; ++k) {
-    for (int i = 1; i <= N; ++i) {
-      for (int j = 1; j <= N; ++j) {
-        next[IX(i,j)] = (x0[IX(i,j)] + a * (cur[IX(i-1,j)] + cur[IX(i+1,j)] + cur[IX(i,j-1)] + cur[IX(i,j+1)])) / (1.0f + 4.0f * a);
+    // cpu
+    case 1:
+    default:
+      const int size = (N + 2) * (N + 2);
+
+      float *x_new = (float*)malloc(size * sizeof(float));
+
+      float *cur   = x;      // read buffer (k-th iterate)
+      float *next  = x_new;  // write buffer (k+1-th iterate)
+
+      for (int k = 0; k < 20; ++k) {
+        for (int i = 1; i <= N; ++i) {
+          for (int j = 1; j <= N; ++j) {
+            next[IX(i,j)] = (x0[IX(i,j)] + a * (cur[IX(i-1,j)] + cur[IX(i+1,j)] + cur[IX(i,j-1)] + cur[IX(i,j+1)])) / (1.0f + 4.0f * a);
+          }
+        }
+        set_bnd(N, b, next);
+
+        // swap read/write roles for next iteration
+        SWAP(cur, next);
       }
-    }
-    set_bnd(N, b, next);
 
-    // swap read/write roles for next iteration
-    SWAP(cur, next);
+      // make sure result ends up in the caller's x buffer
+      if (cur != x) {
+        memcpy(x, cur, size * sizeof(float));
+      }
+      free(x_new);
+    break;
   }
-
-  // make sure result ends up in the caller's x buffer
-  if (cur != x_out) {
-    memcpy(x_out, cur, size * sizeof(float));
-  }
-  free(x_new);
 }
 
 void diffuse(int N, int b, float *x, float *x0, float diff, float dt) {
@@ -224,6 +245,7 @@ int main(void) {
   float dt;
   const float diff = 2e-4;
   const float visc = 1e-4;
+  const float middle_source_value = 4.0f;
 
   InitWindow(screenWidth, screenHeight, "Fluid!");
 
@@ -252,13 +274,13 @@ int main(void) {
     // dens_prev[IX(N/2, N/2)] += 0.1f;
     // set_all(N, dens_prev, 0.0f);
     scalar_multiplier(dens_prev, N+2, N+2, 0.0f);
-    for (int ioff = -1; ioff <= 1; ioff++) {
-      for (int joff = -1; joff <= 1; joff++) {
-        dens_prev[IX(N/2 + ioff, N/2 + joff)] = 10.0f;
+    for (int ioff = -2; ioff <= 2; ioff++) {
+      for (int joff = -2; joff <= 2; joff++) {
+        dens_prev[IX(N/2 + ioff, N/2 + joff)] = middle_source_value;
       }
     }
-    u[IX(N/2, N/2)] = 0.0f;
-    v[IX(N/2, N/2)] = 0.0f;
+    u[IX(N/2, N/2)] = 0.2f;
+    v[IX(N/2, N/2)] = 1.5f;
 
     vel_step(N, u, v, u_prev, v_prev, visc, dt);
     dens_step(N, dens, dens_prev, u, v, diff, dt);

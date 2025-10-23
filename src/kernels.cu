@@ -3,6 +3,9 @@
 
 #define CEIL_DIV(x, y) ((x + y - 1) / y)
 #define IDX(i, j, ldm) ((i) * ldm + (j))  // ldm = leading dimension (if the 2d array is row major, ldm = cols)
+#ifndef SWAP
+#define SWAP(x, y) {float *tmp=x; x=y; y=tmp;}
+#endif
 
 __global__
 void scalar_multiplier_kernel(float *A, size_t rows, size_t cols, float c) {
@@ -41,6 +44,15 @@ void set_bnd_kernel(float *A, size_t rows, size_t cols, int b) {
     A[IDX(     0, i, cols)] = b == 1 ? -A[IDX(     1, i, cols)] : A[IDX(     1, i, cols)];
     A[IDX(rows-1, i, cols)] = b == 1 ? -A[IDX(rows-2, i, cols)] : A[IDX(rows-2, i, cols)];
   }
+}
+
+__global__
+void diffuse_jacobi_kernel(float *A, float *B, const float *C, size_t rows, size_t cols, float a) {
+  int j = blockIdx.x * blockDim.x + threadIdx.x;
+  int i = blockIdx.y * blockDim.y + threadIdx.y;
+
+  if (1 <= i && i <= rows-2 && 1 <= j && j <= cols-2)
+    A[IDX(i,j,cols)] = (C[IDX(i,j,cols)] + a * (B[IDX(i-1,j,cols)] + B[IDX(i+1,j,cols)] + B[IDX(i,j-1,cols)] + B[IDX(i,j+1,cols)])) / (1.0f + 4.0f * a);
 }
 
 extern "C"
@@ -115,4 +127,34 @@ void set_bnd_host(float *A_h, size_t rows, size_t cols, int b) {
 
   cudaMemcpy(A_h, A_d, size, cudaMemcpyDeviceToHost);
   cudaFree(A_d);
+}
+
+extern "C"
+void diffuse_jacobi_host(float *A_h, const float *B_h, size_t rows, size_t cols, int b, const float a) {
+  float *A_d, *B_d, *C_d; size_t size = rows * cols * sizeof(float);
+  cudaMalloc(&A_d, size);
+  cudaMalloc(&B_d, size);
+  cudaMalloc(&C_d, size);
+  cudaMemcpy(A_d, A_h, size, cudaMemcpyHostToDevice);
+  cudaMemcpy(B_d, B_h, size, cudaMemcpyHostToDevice);
+
+  float *cur   = A_d;      // read buffer (k-th iterate)
+  float *next  = C_d;      // write buffer (k+1-th iterate)
+
+  dim3 blockDim(16, 16, 1);
+  dim3 gridDim(CEIL_DIV(rows, 16), CEIL_DIV(cols, 16), 1);
+
+  for (int k = 0; k < 20; ++k) {
+    diffuse_jacobi_kernel<<<gridDim, blockDim>>>(next, cur, B_d, rows, cols, a);
+    set_bnd_kernel<<<CEIL_DIV(fmax(rows, cols), 256), 256>>>(next, rows, cols, b);
+    SWAP(cur, next);
+  }
+
+  // make sure result ends up in the caller's A_h host buffer
+  if (cur != A_h) {
+    cudaMemcpy(A_h, cur, size, cudaMemcpyDeviceToHost);
+  }
+  cudaFree(A_d);
+  cudaFree(B_d);
+  cudaFree(C_d);
 }
