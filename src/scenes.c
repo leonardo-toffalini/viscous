@@ -47,7 +47,7 @@ void setup_scene_low_viscosity(SceneParams *params) {
 
 void setup_scene_multiple_sources(SceneParams *params) {
   setup_scene_default(params);
-  params->middle_source_value = 2.0f;
+  params->middle_source_value = 8.0f;
   params->source_radius = 1;
 }
 

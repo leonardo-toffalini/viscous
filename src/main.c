@@ -68,11 +68,13 @@ int main(void) {
       .data = dens,
       .width = params.imgWidth,
       .height = params.imgHeight,
-      .format = PIXELFORMAT_UNCOMPRESSED_R32,  // x in [0.0f, 1.0f], 32 bit float, 1 channel (red)
+      .format = PIXELFORMAT_UNCOMPRESSED_R32,  // x in [0.0f, 1.0f], 32 bit float, 1 channel
       .mipmaps = 1
   };
 
   Texture2D texture = LoadTextureFromImage(img);
+
+  Shader colorShader = LoadShader(NULL, "src/color_conversion.frag");
 
   char grid_size_buffer[100];
   sprintf(grid_size_buffer, "N=%d", params.N);
@@ -166,9 +168,12 @@ int main(void) {
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
+    
+    BeginShaderMode(colorShader);
     DrawTextureEx(texture,
                   (Vector2){1, 1},
                   0.0f, params.scale, WHITE);
+    EndShaderMode();
     DrawFPS(10, 10);
     
     // Display current scene
@@ -183,6 +188,7 @@ int main(void) {
     EndDrawing();
   }
 
+  UnloadShader(colorShader);
   UnloadTexture(texture);
   CloseWindow();
 
