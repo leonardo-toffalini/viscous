@@ -186,15 +186,17 @@ filter({})
 
 includedirs({ "../src" })
 includedirs({ "../include" })
-
-links({ "raylib", "cuda_kernels" })
-
-cdialect("C17")
-cppdialect("C++17")
-
 includedirs({ raylib_dir .. "/src" })
 includedirs({ raylib_dir .. "/src/external" })
 includedirs({ raylib_dir .. "/src/external/glfw/include" })
+
+links({ "raylib" })
+
+filter("system:not macosx")
+links({ "cuda_kernels" })
+
+cdialect("C17")
+cppdialect("C++17")
 flags({ "ShadowedVariables" })
 platform_defines()
 
@@ -230,8 +232,9 @@ filter({})
 ------------------------------------
 --          CUDA KERNELS          --
 ------------------------------------
+filter("system:not macosx")
 project("cuda_kernels")
-kind("StaticLib") -- or "SharedLib" if you want
+kind("StaticLib")
 language("C++")
 location("build_files/")
 targetdir("../bin/%{cfg.buildcfg}/cuda")
@@ -251,6 +254,8 @@ filter({})
 
 -- Include directories if needed for CUDA
 includedirs({ "src" })
+
+filter({})
 
 ------------------------------------
 --            RAYLIB              --
