@@ -1,5 +1,7 @@
 typedef struct {
   int N;
+  int rows;
+  int cols;
   float scale;
   int screenWidth;
   int screenHeight;
@@ -16,6 +18,8 @@ typedef struct {
 
 void setup_scene_default(SceneParams *params) {
   params->N = N_;
+  params->rows = ROWS;
+  params->cols = COLS;
   params->scale = 3.0f;
   params->screenWidth = params->scale * (params->N + 2) + 2;
   params->screenHeight = params->scale * (params->N + 2) + 2;

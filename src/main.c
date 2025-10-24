@@ -6,8 +6,10 @@
 #include <math.h>
 
 #define N_ 200
-#define SIZE_ ((N_+2)*(N_+2))
-#define IX(i, j) ((i)+(N_+2)*(j))
+#define ROWS 200
+#define COLS 200
+#define SIZE_ ((ROWS+2)*(COLS+2))
+#define IX(i, j) ((i)+(COLS+2)*(j))
 #ifndef SWAP
 #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
 #endif
@@ -58,7 +60,7 @@ int main(void) {
   static float u[SIZE_], v[SIZE_], u_prev[SIZE_], v_prev[SIZE_];
   static float dens[SIZE_], dens_prev[SIZE_];
 
-  zero_all(params.N, dens, dens_prev, u, u_prev, v, v_prev);
+  zero_all(params.rows, params.cols, dens, dens_prev, u, u_prev, v, v_prev);
 
   float dt;
 
@@ -97,9 +99,13 @@ int main(void) {
   while (!WindowShouldClose()) {
     dt = GetFrameTime();
 
-    // dens_prev[IX(params.N/2, params.N/2)] += 0.1f;
-    // set_all(params.N, dens_prev, 0.0f);
-    scalar_multiplier(dens_prev, params.N+2, params.N+2, 0.0f);
+    scalar_multiplier(dens_prev, params.rows+2, params.cols+2, 0.0f);
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+      pos p = mouse_pos_to_index(params.rows+2, params.cols+2, params.scale);
+      for (int ioff = -1; ioff < 1; ioff++)
+        for (int joff = -1; joff < 1; joff++)
+          dens_prev[IX(p.i + ioff, p.j + joff)] += 10.0f;
+    }
     
     // Add sources based on scene type
     if (SELECTED_SCENE == SCENE_MULTIPLE_SOURCES) {
@@ -182,9 +188,9 @@ int main(void) {
     DrawText(scene_buffer, 10, 40, 20, RAYWHITE);
     
     // Display parameters
-    DrawText(grid_size_buffer, params.scale * params.N - 60, 10, 20, RAYWHITE);
-    DrawText(diff_buffer, params.scale * params.N - 100, params.scale * params.N - 35, 20, RAYWHITE);
-    DrawText(visc_buffer, params.scale * params.N - 100, params.scale * params.N - 15, 20, RAYWHITE);
+    DrawText(grid_size_buffer, params.scale * params.cols - 60, 10, 20, RAYWHITE);
+    DrawText(diff_buffer, params.scale * params.cols - 100, params.scale * params.cols - 35, 20, RAYWHITE);
+    DrawText(visc_buffer, params.scale * params.cols - 100, params.scale * params.cols - 15, 20, RAYWHITE);
     EndDrawing();
   }
 
