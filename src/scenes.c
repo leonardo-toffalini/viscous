@@ -32,8 +32,8 @@ void setup_scene_default(SceneParams *params) {
   params->middle_source_value = 4.0f;
   params->source_radius = 2;
   
-  params->initial_u_velocity = 0.2f;
-  params->initial_v_velocity = 1.5f;
+  params->initial_u_velocity = 1.5f;
+  params->initial_v_velocity = 0.2f;
 }
 
 void setup_scene_high_diffusion(SceneParams *params) {
@@ -45,32 +45,35 @@ void setup_scene_high_diffusion(SceneParams *params) {
 void setup_scene_low_viscosity(SceneParams *params) {
   setup_scene_default(params);
   params->visc = 1e-5f;
-  params->initial_u_velocity = 0.5f;
-  params->initial_v_velocity = 2.0f;
-}
-
-void setup_scene_multiple_sources(SceneParams *params) {
-  setup_scene_default(params);
-  params->middle_source_value = 8.0f;
-  params->source_radius = 1;
+  params->initial_u_velocity = 2.0f;
+  params->initial_v_velocity = 0.5f;
 }
 
 void setup_scene_turbulent(SceneParams *params) {
   setup_scene_default(params);
   params->diff = 5e-4f;
   params->visc = 5e-5f;
-  params->initial_u_velocity = 1.0f;
-  params->initial_v_velocity = 3.0f;
+  params->initial_u_velocity = 3.0f;
+  params->initial_v_velocity = 1.0f;
   params->middle_source_value = 8.0f;
 }
 
 void setup_scene_smoke(SceneParams *params) {
   setup_scene_default(params);
   params->diff = 1e-5f;
+  params->visc = 1e-7f;
+  params->middle_source_value = 15.0f;
+  params->initial_u_velocity = -0.25f;
+  params->initial_v_velocity = 0.f;
+}
+
+void setup_scene_empty(SceneParams *params) {
+  setup_scene_default(params);
+  params->diff = 1e-5f;
   params->visc = 1e-6f;
-  params->middle_source_value = 12.0f;
+  params->middle_source_value = 0.0f;
   params->initial_u_velocity = 0.0f;
-  params->initial_v_velocity = -0.7f;
+  params->initial_v_velocity = 0.0f;
 }
 
 void setup_scene(SceneParams *params, SceneType scene_type) {
@@ -86,14 +89,17 @@ void setup_scene(SceneParams *params, SceneType scene_type) {
     case SCENE_LOW_VISCOSITY:
       setup_scene_low_viscosity(params);
       break;
-    case SCENE_MULTIPLE_SOURCES:
-      setup_scene_multiple_sources(params);
-      break;
     case SCENE_TURBULENT:
       setup_scene_turbulent(params);
       break;
     case SCENE_SMOKE:
       setup_scene_smoke(params);
+      break;
+    case SCENE_EMPTY:
+      setup_scene_empty(params);
+      break;
+    case SCENE_RAYLEIGH_BENARD_CONVECTION:
+      setup_scene_empty(params);
       break;
     default:
       setup_scene_default(params);

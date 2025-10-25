@@ -6,7 +6,7 @@ typedef struct {
 pos mouse_pos_to_index(size_t rows, size_t cols, float scale) {
   int j = GetMouseX() / scale;
   int i = GetMouseY() / scale;
-  return (pos){j, i};
+  return (pos){i, j};
 }
 
 void add_source(int rows, int cols, float *x, float *s, float dt) {
@@ -56,46 +56,11 @@ void diffuse_jacobi(int N, int b, float *x, const float *x0, float diff, float d
   // the gpu version is magnitudes faster than the cpu version
   // for the gpu version the iteration number k does not change the fps that much
   // while for the cpu version, increasing k, the fps quickly drops
-  int diffuse_jacobi_type = 1;  // Use CPU implementation
-
-  switch (diffuse_jacobi_type) {
-    // gpu
-    case 0:
-      diffuse_jacobi_host(x, x0, N+2, N+2, b, a);
-      break;
-
-    // cpu
-    case 1:
-    default: {
-      const int size = (N + 2) * (N + 2);
-
-      float *x_new = (float*)malloc(size * sizeof(float));
-
-      float *cur   = x;      // read buffer (k-th iterate)
-      float *next  = x_new;  // write buffer (k+1-th iterate)
-
-      for (int k = 0; k < 20; ++k) {
-        for (int i = 1; i <= N; ++i) {
-          for (int j = 1; j <= N; ++j) {
-            next[IX(i,j)] = (x0[IX(i,j)] + a * (cur[IX(i-1,j)] + cur[IX(i+1,j)] + cur[IX(i,j-1)] + cur[IX(i,j+1)])) / (1.0f + 4.0f * a);
-          }
-        }
-        set_bnd(N, N, b, next);
-
-        // swap read/write roles for next iteration
-        SWAP(cur, next);
-      }
-
-      // make sure result ends up in the caller's x buffer
-      if (cur != x) {
-        memcpy(x, cur, size * sizeof(float));
-      }
-      free(x_new);
-      break;
-    }
-  }
+  diffuse_jacobi_host(x, x0, N+2, N+2, b, a);
 }
 
+// Gauss-Seidel is way harder to implement on gpu as the cells are not independent
+// Jacobi iteration is easier on the gpu
 void diffuse(int N, int b, float *x, float *x0, float diff, float dt) {
   float a = dt * diff * N * N;
 

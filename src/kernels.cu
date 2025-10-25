@@ -55,6 +55,37 @@ void diffuse_jacobi_kernel(float *A, float *B, const float *C, size_t rows, size
     A[IDX(i,j,cols)] = (C[IDX(i,j,cols)] + a * (B[IDX(i-1,j,cols)] + B[IDX(i+1,j,cols)] + B[IDX(i,j-1,cols)] + B[IDX(i,j+1,cols)])) / (1.0f + 4.0f * a);
 }
 
+__global__
+void advect_kernel(float *d, float *d0, float *u, float *v, size_t rows, size_t cols, float dt0) {
+  int j = blockIdx.x * blockDim.x + threadIdx.x;
+  int i = blockIdx.y * blockDim.y + threadIdx.y;
+
+  if (1 <= i && i <= rows-2 && 1 <= j && j <= cols - 2) {
+      float x = i - dt0 * u[IDX(i, j, cols)];
+      float y = j - dt0 * v[IDX(i, j, cols)];
+      if (x < 0.5f)
+        x = 0.5f;
+      if (x > rows + 0.5f)
+        x = rows + 0.5f;
+      int i0 = (int)x;
+      int i1 = i0 + 1;
+      if (y < 0.5f)
+        y = 0.5f;
+      if (y > cols + 0.5f)
+        y = cols + 0.5f;
+      int j0 = (int)y;
+      int j1 = j0 + 1;
+
+      float s1 = x - i0;
+      float s0 = 1 - s1;
+      float t1 = y - j0;
+      float t0 = 1 - t1;
+
+      d[IDX(i, j, cols)] = s0 * (t0 * d0[IDX(i0, j0, cols)] + t1 * d0[IDX(i0, j1, cols)]) +
+                    s1 * (t0 * d0[IDX(i1, j0, cols)] + t1 * d0[IDX(i1, j1, cols)]);
+  }
+}
+
 extern "C"
 void scalar_multiplier(float *A_h, size_t rows, size_t cols, float c) {
   float *A_d; size_t size = rows * cols * sizeof(float);
@@ -150,11 +181,38 @@ void diffuse_jacobi_host(float *A_h, const float *B_h, size_t rows, size_t cols,
     SWAP(cur, next);
   }
 
+  cudaDeviceSynchronize();
+
   // make sure result ends up in the caller's A_h host buffer
-  if (cur != A_h) {
-    cudaMemcpy(A_h, cur, size, cudaMemcpyDeviceToHost);
-  }
+  cudaMemcpy(A_h, A_d, size, cudaMemcpyDeviceToHost);
   cudaFree(A_d);
   cudaFree(B_d);
   cudaFree(C_d);
+}
+
+extern "C"
+void advect_host(float *d_h, float *d0_h, float *u_h, float *v_h, size_t rows, size_t cols, int b, float dt) {
+  float *d_d, *d0_d, *u_d, *v_d; size_t size = rows * cols * sizeof(float);
+  cudaMalloc(&d_d, size);
+  cudaMalloc(&d0_d, size);
+  cudaMalloc(&u_d, size);
+  cudaMalloc(&v_d, size);
+  cudaMemcpy(d_d, d_h, size, cudaMemcpyHostToDevice);
+  cudaMemcpy(d0_d, d0_h, size, cudaMemcpyHostToDevice);
+  cudaMemcpy(u_d, u_h, size, cudaMemcpyHostToDevice);
+  cudaMemcpy(v_d, v_h, size, cudaMemcpyHostToDevice);
+
+  dim3 blockDim(16, 16, 1);
+  dim3 gridDim(CEIL_DIV(rows, 16), CEIL_DIV(cols, 16), 1);
+
+  float dt0 = dt * fmax(rows, cols);
+  advect_kernel<<<gridDim, blockDim>>>(d_d, d0_d, u_d, v_d, rows, cols, dt0);
+  set_bnd_kernel<<<CEIL_DIV(fmax(rows, cols), 256), 256>>>(d_d, rows, cols, b);
+  cudaDeviceSynchronize();
+
+  cudaMemcpy(d_h, d_d, size, cudaMemcpyDeviceToHost);
+  cudaFree(d_d);
+  cudaFree(d0_d);
+  cudaFree(u_d);
+  cudaFree(v_d);
 }

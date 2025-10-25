@@ -9,7 +9,7 @@
 #define ROWS 200
 #define COLS 200
 #define SIZE_ ((ROWS+2)*(COLS+2))
-#define IX(i, j) ((i)+(COLS+2)*(j))
+#define IX(i, j) ((j)+(ROWS+2)*(i))
 #ifndef SWAP
 #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
 #endif
@@ -17,18 +17,19 @@
 // TODO:
 // - add a switch such that if someone is running without nvidia gpu the computations default to cpu
 // - implement jacobi iteration in cuda
-// - implement advect in cuda
-// - add ui input
+// - implement advect and project in cuda
 // - probably should do something about the possibility when there are less threads than cells in the array
+// - add more boundary cells, objects in the scene to interact with
 // - currently, it defaults to cuda if not on mac, instead it should default to cuda if it has nvcc
 
 typedef enum {
   SCENE_DEFAULT = 0,
   SCENE_HIGH_DIFFUSION = 1,
   SCENE_LOW_VISCOSITY = 2,
-  SCENE_MULTIPLE_SOURCES = 3,
-  SCENE_TURBULENT = 4,
-  SCENE_SMOKE = 5,
+  SCENE_TURBULENT = 3,
+  SCENE_SMOKE = 4,
+  SCENE_EMPTY = 5,
+  SCENE_RAYLEIGH_BENARD_CONVECTION = 6, // https://en.wikipedia.org/wiki/Rayleigh%E2%80%93B%C3%A9nard_convection
   SCENE_COUNT
 } SceneType;
 
@@ -89,10 +90,13 @@ int main(void) {
     "Default",
     "High Diffusion", 
     "Low Viscosity",
-    "Multiple Sources",
     "Turbulent",
-    "Smoke"
+    "Smoke",
+    "Empty",
+    "R-B convection",
   };
+  char scene_buffer[100];
+  sprintf(scene_buffer, "Scene: %s", scene_names[SELECTED_SCENE]);
 
   SetTargetFPS(60);
 
@@ -100,64 +104,35 @@ int main(void) {
     dt = GetFrameTime();
 
     scalar_multiplier(dens_prev, params.rows+2, params.cols+2, 0.0f);
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-      pos p = mouse_pos_to_index(params.rows+2, params.cols+2, params.scale);
-      for (int ioff = -1; ioff < 1; ioff++)
-        for (int joff = -1; joff < 1; joff++)
-          dens_prev[IX(p.i + ioff, p.j + joff)] += 10.0f;
-    }
     
-    // Add sources based on scene type
-    if (SELECTED_SCENE == SCENE_MULTIPLE_SOURCES) {
-      // Multiple sources at different positions
-      int center = params.N / 2;
-      int quarter = params.N / 4;
-      int three_quarter = 3 * params.N / 4;
-      
-      // Center source
-      for (int ioff = -(int)params.source_radius; ioff <= (int)params.source_radius; ioff++) {
-        for (int joff = -(int)params.source_radius; joff <= (int)params.source_radius; joff++) {
-          dens_prev[IX(center + ioff, center + joff)] = params.middle_source_value;
-        }
-      }
-      
-      // Corner sources
-      for (int ioff = -(int)params.source_radius; ioff <= (int)params.source_radius; ioff++) {
-        for (int joff = -(int)params.source_radius; joff <= (int)params.source_radius; joff++) {
-          dens_prev[IX(quarter + ioff, quarter + joff)] = params.middle_source_value;
-          dens_prev[IX(three_quarter + ioff, three_quarter + joff)] = params.middle_source_value;
-        }
-      }
-      
-      // Add some velocity at the sources
-      u[IX(center, center)] = params.initial_u_velocity;
-      v[IX(center, center)] = params.initial_v_velocity;
-      u[IX(quarter, quarter)] = -params.initial_u_velocity;
-      v[IX(quarter, quarter)] = -params.initial_v_velocity;
-      u[IX(three_quarter, three_quarter)] = params.initial_u_velocity;
-      v[IX(three_quarter, three_quarter)] = -params.initial_v_velocity;
-    } else if (SELECTED_SCENE == SCENE_SMOKE) {
-      // Smoke: continuous point source with upward flow and slight variation
+    if (SELECTED_SCENE == SCENE_SMOKE) {
       int center = params.N / 2;
       
       dens_prev[IX(center, center)] = params.middle_source_value;
       
-      // Add upward velocity with slight horizontal variation
-      // Use time-based variation for natural smoke movement
       static float time_accumulator = 0.0f;
       time_accumulator += dt;
       
-      float horizontal_variation = 0.1f * sinf(time_accumulator * 0.5f);
-      u[IX(center, center)] = horizontal_variation;
-      v[IX(center, center)] = params.initial_v_velocity;
+      // even with no horizontal variation it looks smoke-like
+      float horizontal_variation = 0.0f; // 0.1f * sinf(time_accumulator * 0.5f);
+      u[IX(center, center)] = params.initial_u_velocity;
+      v[IX(center, center)] = horizontal_variation;
       
       // Add some velocity to nearby cells for smoother flow
-      u[IX(center-1, center)] = horizontal_variation * 0.5f;
-      u[IX(center+1, center)] = horizontal_variation * 0.5f;
-      v[IX(center, center-1)] = params.initial_v_velocity * 0.8f;
-      v[IX(center, center+1)] = params.initial_v_velocity * 0.8f;
+      u[IX(center, center-1)] = params.initial_u_velocity * 0.8f;
+      u[IX(center, center+1)] = params.initial_u_velocity * 0.8f;
+      v[IX(center-1, center)] = horizontal_variation * 0.5f;
+      v[IX(center+1, center)] = horizontal_variation * 0.5f;
+    } else if (SELECTED_SCENE == SCENE_RAYLEIGH_BENARD_CONVECTION) {
+      static float time_accumulator = 0.0f;
+      time_accumulator += dt;
+
+      for (int i = 1; i <= params.cols + 1; i++) {
+        if ((int)time_accumulator % 10 == 0)
+          dens_prev[IX(params.rows, i)] = 0.1f;
+        u[IX(params.rows, i)] = -time_accumulator * 0.1f;
+      }
     } else {
-      // Single source at center
       for (int ioff = -(int)params.source_radius; ioff <= (int)params.source_radius; ioff++) {
         for (int joff = -(int)params.source_radius; joff <= (int)params.source_radius; joff++) {
           dens_prev[IX(params.N/2 + ioff, params.N/2 + joff)] = params.middle_source_value;
@@ -165,6 +140,17 @@ int main(void) {
       }
       u[IX(params.N/2, params.N/2)] = params.initial_u_velocity;
       v[IX(params.N/2, params.N/2)] = params.initial_v_velocity;
+    }
+
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+      pos p = mouse_pos_to_index(params.rows+2, params.cols+2, params.scale);
+      // add source to dens
+      for (int ioff = -1; ioff < 1; ioff++)
+        for (int joff = -1; joff < 1; joff++)
+          dens_prev[IX(p.i + ioff, p.j + joff)] += 10.0f;
+
+      // add upward vel
+      u_prev[IX(p.i, p.j)] += -2.7f;
     }
 
     vel_step(params.N, u, v, u_prev, v_prev, params.visc, dt);
@@ -180,17 +166,16 @@ int main(void) {
                   (Vector2){1, 1},
                   0.0f, params.scale, WHITE);
     EndShaderMode();
-    DrawFPS(10, 10);
     
-    // Display current scene
-    char scene_buffer[100];
-    sprintf(scene_buffer, "Scene: %s", scene_names[SELECTED_SCENE]);
-    DrawText(scene_buffer, 10, 40, 20, RAYWHITE);
     
     // Display parameters
-    DrawText(grid_size_buffer, params.scale * params.cols - 60, 10, 20, RAYWHITE);
-    DrawText(diff_buffer, params.scale * params.cols - 100, params.scale * params.cols - 35, 20, RAYWHITE);
-    DrawText(visc_buffer, params.scale * params.cols - 100, params.scale * params.cols - 15, 20, RAYWHITE);
+    if (IsKeyDown(KEY_SPACE)) {
+      DrawFPS(10, 10);
+      DrawText(scene_buffer, 10, 40, 20, RAYWHITE);
+      DrawText(grid_size_buffer, params.scale * params.cols - 60, 10, 20, RAYWHITE);
+      DrawText(diff_buffer, params.scale * params.cols - 100, params.scale * params.cols - 35, 20, RAYWHITE);
+      DrawText(visc_buffer, params.scale * params.cols - 100, params.scale * params.cols - 15, 20, RAYWHITE);
+    }
     EndDrawing();
   }
 
