@@ -1,11 +1,15 @@
 // Single translation unit build
 #define VISC_SINGLE_TU
+// Toggle video rendering (write frames via ffmpeg) instead of on-screen window
+// Enable by uncommenting the line below
+#define RENDER_TO_VIDEO
 #include "raylib.h"
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <stdint.h>
 
 #define N_ 200
 #define ROWS 200
@@ -18,7 +22,18 @@
 
 // Reduce solver iterations to improve performance (trade-off: slightly less smooth diffusion/pressure)
 #ifndef SOLVER_ITERATIONS
-#define SOLVER_ITERATIONS 10
+#define SOLVER_ITERATIONS 5
+#endif
+
+// Video rendering configuration (used only if RENDER_TO_VIDEO is defined)
+#ifndef VIDEO_FPS
+#define VIDEO_FPS 60
+#endif
+#ifndef RENDER_FRAMES
+#define RENDER_FRAMES 600
+#endif
+#ifndef VIDEO_OUTPUT_PATH
+#define VIDEO_OUTPUT_PATH "out.mp4"
 #endif
 
 // TODO:
@@ -72,6 +87,7 @@ int main(void) {
 
   float dt;
 
+  #ifndef RENDER_TO_VIDEO
   InitWindow(params.screenWidth, params.screenHeight, "Fluid!");
 
   Image img = {
@@ -110,7 +126,9 @@ int main(void) {
   sprintf(scene_buffer, "Scene: %s", scene_names[SELECTED_SCENE]);
 
   SetTargetFPS(120);
+  #endif
 
+  #ifndef RENDER_TO_VIDEO
   while (!WindowShouldClose()) {
     dt = GetFrameTime();
 
@@ -193,6 +211,100 @@ int main(void) {
   UnloadShader(colorShader);
   UnloadTexture(texture);
   CloseWindow();
+  #else
+  // Video rendering path: write grayscale frames to ffmpeg
+  const int width = params.imgWidth;
+  const int height = params.imgHeight;
+  const int total_frames = RENDER_FRAMES;
+  const float fixed_dt = 1.0f / (float)VIDEO_FPS;
+
+  char ffmpeg_cmd[512];
+  snprintf(
+    ffmpeg_cmd,
+    sizeof(ffmpeg_cmd),
+    "ffmpeg -y -f rawvideo -pixel_format gray -video_size %dx%d -framerate %d -i - -vf format=yuv420p -vcodec libx264 -pix_fmt yuv420p %s",
+    width,
+    height,
+    VIDEO_FPS,
+    VIDEO_OUTPUT_PATH
+  );
+
+  FILE *ffmpeg = popen(ffmpeg_cmd, "w");
+  if (!ffmpeg) {
+    fprintf(stderr, "Failed to open ffmpeg pipe. Command was: %s\n", ffmpeg_cmd);
+    return 1;
+  }
+
+  uint8_t *frame = (uint8_t*)malloc((size_t)width * (size_t)height);
+  if (!frame) {
+    fprintf(stderr, "Failed to allocate frame buffer (%dx%d)\n", width, height);
+    pclose(ffmpeg);
+    return 1;
+  }
+
+  for (int f = 0; f < total_frames; f++) {
+    dt = fixed_dt;
+
+    scalar_multiplier(dens_prev, params.rows+2, params.cols+2, 0.0f);
+    
+    if (SELECTED_SCENE == SCENE_SMOKE) {
+      int center = params.N / 2;
+      
+      dens_prev[IX(center, center)] = params.middle_source_value;
+      
+      static float time_accumulator = 0.0f;
+      time_accumulator += dt;
+      
+      float horizontal_variation = 0.0f;
+      u[IX(center, center)] = params.initial_u_velocity;
+      v[IX(center, center)] = horizontal_variation;
+      
+      u[IX(center, center-1)] = params.initial_u_velocity * 0.8f;
+      u[IX(center, center+1)] = params.initial_u_velocity * 0.8f;
+      v[IX(center-1, center)] = horizontal_variation * 0.5f;
+      v[IX(center+1, center)] = horizontal_variation * 0.5f;
+    } else if (SELECTED_SCENE == SCENE_RAYLEIGH_BENARD_CONVECTION) {
+      static float time_accumulator = 0.0f;
+      time_accumulator += dt;
+
+      for (int i = 1; i <= params.cols + 1; i++) {
+        if ((int)time_accumulator % 10 == 0)
+          dens_prev[IX(params.rows, i)] = 0.1f;
+        u[IX(params.rows, i)] = -time_accumulator * 0.1f;
+      }
+    } else {
+      for (int ioff = -(int)params.source_radius; ioff <= (int)params.source_radius; ioff++) {
+        for (int joff = -(int)params.source_radius; joff <= (int)params.source_radius; joff++) {
+          dens_prev[IX(params.N/2 + ioff, params.N/2 + joff)] = params.middle_source_value;
+        }
+      }
+      u[IX(params.N/2, params.N/2)] = params.initial_u_velocity;
+      v[IX(params.N/2, params.N/2)] = params.initial_v_velocity;
+    }
+
+    vel_step(params.N, u, v, u_prev, v_prev, params.visc, dt);
+    dens_step(params.N, dens, dens_prev, u, v, params.diff, dt);
+
+    // Convert the density field [0,1] to 8-bit grayscale frame
+    for (int i = 0; i < height; i++) {
+      for (int j = 0; j < width; j++) {
+        float c = dens[IX(i, j)];
+        if (c < 0.0f) c = 0.0f;
+        if (c > 1.0f) c = 1.0f;
+        frame[i * width + j] = (uint8_t)(c * 255.0f + 0.5f);
+      }
+    }
+
+    size_t written = fwrite(frame, 1, (size_t)width * (size_t)height, ffmpeg);
+    if (written != (size_t)width * (size_t)height) {
+      fprintf(stderr, "Short write to ffmpeg pipe at frame %d (wrote %zu)\n", f, written);
+      break;
+    }
+  }
+
+  free(frame);
+  pclose(ffmpeg);
+  #endif
 
   return 0;
 }
