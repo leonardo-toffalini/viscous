@@ -1,3 +1,5 @@
+// Build as part of a single translation unit included from main.c
+#ifdef VISC_SINGLE_TU
 typedef struct {
   int N;
   int rows;
@@ -106,3 +108,4 @@ void setup_scene(SceneParams *params, SceneType scene_type) {
       break;
   }
 }
+#endif

@@ -1,3 +1,5 @@
+// Build as part of a single translation unit included from main.c
+#ifdef VISC_SINGLE_TU
 
 // CPU implementations of CUDA functions
 void scalar_multiplier(float *A, size_t rows, size_t cols, float c) {
@@ -82,3 +84,4 @@ void diffuse_jacobi_host(float *A_h, const float *B_h, size_t rows, size_t cols,
   free(A_new);
 }
 
+#endif

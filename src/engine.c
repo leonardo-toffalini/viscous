@@ -1,3 +1,5 @@
+// Build as part of a single translation unit included from main.c
+#ifdef VISC_SINGLE_TU
 #include "raylib.h"
 #include <stdlib.h>
 #include <stddef.h>
@@ -170,3 +172,4 @@ void zero_all(int rows, int cols, float *dens, float* dens_prev, float *u, float
     }
   }
 }
+#endif

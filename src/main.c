@@ -1,3 +1,5 @@
+// Single translation unit build
+#define VISC_SINGLE_TU
 #include "raylib.h"
 #include <stdlib.h>
 #include <stddef.h>
