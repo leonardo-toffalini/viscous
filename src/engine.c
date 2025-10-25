@@ -1,3 +1,10 @@
+#include "raylib.h"
+#include <stdlib.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+
 typedef struct {
   int i;
   int j;

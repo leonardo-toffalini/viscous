@@ -178,6 +178,7 @@ vpaths({
 })
 
 files({ "../src/**.c", "../src/**.cpp", "../src/**.h", "../src/**.hpp", "../include/**.h", "../include/**.hpp" })
+removefiles({ "../src/engine_gpu.c", "../src/engine_gpu_advanced.c" })
 
 filter({ "system:windows", "action:vs*" })
 files({ "../src/*.rc", "../src/*.ico" })
@@ -192,8 +193,8 @@ includedirs({ raylib_dir .. "/src/external/glfw/include" })
 
 links({ "raylib" })
 
-filter("system:not macosx")
-links({ "cuda_kernels" })
+-- filter("system:not macosx")
+-- links({ "cuda_kernels" })
 
 cdialect("C17")
 cppdialect("C++17")
@@ -232,30 +233,30 @@ filter({})
 ------------------------------------
 --          CUDA KERNELS          --
 ------------------------------------
-filter("system:not macosx")
-project("cuda_kernels")
-kind("StaticLib")
-language("C++")
-location("build_files/")
-targetdir("../bin/%{cfg.buildcfg}/cuda")
+-- filter("system:not macosx")
+-- project("cuda_kernels")
+-- kind("StaticLib")
+-- language("C++")
+-- location("build_files/")
+-- targetdir("../bin/%{cfg.buildcfg}/cuda")
 
-files({ "../src/kernels.cu" })
-objdir("%{prj.location}/obj/%{cfg.platform}/%{cfg.buildcfg}/%{prj.name}")
+-- files({ "../src/kernels.cu" })
+-- objdir("%{prj.location}/obj/%{cfg.platform}/%{cfg.buildcfg}/%{prj.name}")
 
--- Tell Premake to treat .cu files with nvcc
--- We use a custom build command for .cu files to call nvcc
-filter({ "files:**.cu" })
-buildcommands({
-	"nvcc -c %{file.abspath} -o %{cfg.objdir}/%{file.basename}.o",
-})
-buildoutputs({ "%{cfg.objdir}/%{file.basename}.o" })
+-- -- Tell Premake to treat .cu files with nvcc
+-- -- We use a custom build command for .cu files to call nvcc
+-- filter({ "files:**.cu" })
+-- buildcommands({
+-- 	"nvcc -c %{file.abspath} -o %{cfg.objdir}/%{file.basename}.o",
+-- })
+-- buildoutputs({ "%{cfg.objdir}/%{file.basename}.o" })
 
-filter({})
+-- filter({})
 
--- Include directories if needed for CUDA
-includedirs({ "src" })
+-- -- Include directories if needed for CUDA
+-- includedirs({ "src" })
 
-filter({})
+-- filter({})
 
 ------------------------------------
 --            RAYLIB              --
