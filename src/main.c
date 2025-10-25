@@ -159,17 +159,16 @@ int main(void) {
     UpdateTexture(texture, dens);
 
     BeginDrawing();
-    ClearBackground(RAYWHITE);
+    ClearBackground(BLACK);
     
     BeginShaderMode(colorShader);
-    DrawTextureEx(texture,
-                  (Vector2){1, 1},
-                  0.0f, params.scale, WHITE);
+    DrawTextureEx(texture, (Vector2){1, 1}, 0.0f, params.scale, WHITE);
     EndShaderMode();
-    
     
     // Display parameters
     if (IsKeyDown(KEY_SPACE)) {
+      DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), ColorAlpha(BLACK, 0.6f));
+
       DrawFPS(10, 10);
       DrawText(scene_buffer, 10, 40, 20, RAYWHITE);
       DrawText(grid_size_buffer, params.scale * params.cols - 60, 10, 20, RAYWHITE);
