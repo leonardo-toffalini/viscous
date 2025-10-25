@@ -42,12 +42,15 @@ void set_bnd_host(float *A_h, size_t rows, size_t cols, int b) {
 
 void diffuse_jacobi_host(float *A_h, const float *B_h, size_t rows, size_t cols, int b, const float a) {
   const int size = rows * cols;
+#ifndef SOLVER_ITERATIONS
+#define SOLVER_ITERATIONS 10
+#endif
   float *A_new = (float*)malloc(size * sizeof(float));
   
   float *cur = A_h;
   float *next = A_new;
   
-  for (int k = 0; k < 20; ++k) {
+  for (int k = 0; k < SOLVER_ITERATIONS; ++k) {
     for (int i = 1; i <= rows-2; ++i) {
       for (int j = 1; j <= cols-2; ++j) {
         next[IX(i,j)] = (B_h[IX(i,j)] + a * (cur[IX(i-1,j)] + cur[IX(i+1,j)] + cur[IX(i,j-1)] + cur[IX(i,j+1)])) / (1.0f + 4.0f * a);

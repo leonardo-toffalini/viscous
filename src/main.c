@@ -16,6 +16,11 @@
 #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
 #endif
 
+// Reduce solver iterations to improve performance (trade-off: slightly less smooth diffusion/pressure)
+#ifndef SOLVER_ITERATIONS
+#define SOLVER_ITERATIONS 10
+#endif
+
 // TODO:
 // - add a switch such that if someone is running without nvidia gpu the computations default to cpu
 // - implement jacobi iteration in cuda
@@ -81,6 +86,10 @@ int main(void) {
 
   Shader colorShader = LoadShader(NULL, "src/color_conversion.frag");
 
+  // Optimize texture sampling: nearest filter and clamp wrap
+  SetTextureFilter(texture, TEXTURE_FILTER_POINT);
+  SetTextureWrap(texture, TEXTURE_WRAP_CLAMP);
+
   char grid_size_buffer[100];
   sprintf(grid_size_buffer, "N=%d", params.N);
   char diff_buffer[100];
@@ -100,7 +109,7 @@ int main(void) {
   char scene_buffer[100];
   sprintf(scene_buffer, "Scene: %s", scene_names[SELECTED_SCENE]);
 
-  SetTargetFPS(60);
+  SetTargetFPS(120);
 
   while (!WindowShouldClose()) {
     dt = GetFrameTime();
@@ -158,6 +167,7 @@ int main(void) {
     vel_step(params.N, u, v, u_prev, v_prev, params.visc, dt);
     dens_step(params.N, dens, dens_prev, u, v, params.diff, dt);
 
+    // Update only the used sub-rectangle to avoid potential extra work
     UpdateTexture(texture, dens);
 
     BeginDrawing();
