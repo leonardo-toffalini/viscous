@@ -1,3 +1,5 @@
+#ifdef SINGLE_TU
+
 typedef struct {
   int N;
   int rows;
@@ -106,3 +108,5 @@ void setup_scene(SceneParams *params, SceneType scene_type) {
       break;
   }
 }
+
+#endif

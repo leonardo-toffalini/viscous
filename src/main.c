@@ -1,3 +1,5 @@
+#define SINGLE_TU
+
 #include "raylib.h"
 #include <stdlib.h>
 #include <stddef.h>
@@ -10,6 +12,8 @@
 #define COLS 200
 #define SIZE_ ((ROWS+2)*(COLS+2))
 #define IX(i, j) ((j)+(ROWS+2)*(i))
+#define ITERATIONS 5
+#define MAX_FPS 60
 #ifndef SWAP
 #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
 #endif
@@ -98,7 +102,7 @@ int main(void) {
   char scene_buffer[100];
   sprintf(scene_buffer, "Scene: %s", scene_names[SELECTED_SCENE]);
 
-  SetTargetFPS(60);
+  SetTargetFPS(MAX_FPS);
 
   while (!WindowShouldClose()) {
     dt = GetFrameTime();
