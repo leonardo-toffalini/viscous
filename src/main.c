@@ -30,7 +30,7 @@
 #define VIDEO_FPS 60
 #endif
 #ifndef RENDER_FRAMES
-#define RENDER_FRAMES 600
+#define RENDER_FRAMES 3000
 #endif
 #ifndef VIDEO_OUTPUT_PATH
 #define VIDEO_OUTPUT_PATH "out.mp4"
