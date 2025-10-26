@@ -12,7 +12,7 @@
 #define COLS 200
 #define SIZE_ ((ROWS+2)*(COLS+2))
 #define IX(i, j) ((j)+(ROWS+2)*(i))
-#define ITERATIONS 5
+#define ITERATIONS 20
 #define MAX_FPS 60
 #ifndef SWAP
 #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
@@ -20,7 +20,6 @@
 
 // TODO:
 // - add a switch such that if someone is running without nvidia gpu the computations default to cpu
-// - implement jacobi iteration in cuda
 // - implement advect and project in cuda
 // - probably should do something about the possibility when there are less threads than cells in the array
 // - add more boundary cells, objects in the scene to interact with
@@ -40,14 +39,7 @@ typedef enum {
 // Scene selection - change this to switch scenes
 #define SELECTED_SCENE SCENE_SMOKE
 
-// CUDA function declarations - implemented in src/kernels.cu, when CUDA is available
-// or in src/kernel_cpu_alternatives.c when it is not
-extern void scalar_multiplier(float *A, size_t rows, size_t cols, float c);
-extern void mat_add(float *A_h, float *B_h, size_t rows, size_t cols, float dt);
-extern void diffuse_bad_host(float *A_h, float *B_h, size_t rows, size_t cols, float a);
-extern void set_bnd_host(float *A_h, size_t rows, size_t cols, int b);
-extern void diffuse_jacobi_host(float *A_h, const float *B_h, size_t rows, size_t cols, int b, const float a);
-
+// should instead detect if CUDA is available and only then include the cpu alternatives
 #ifdef __APPLE__
 #include "kernel_cpu_alternatives.c"
 #endif

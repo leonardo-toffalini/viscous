@@ -1,5 +1,14 @@
 #ifdef SINGLE_TU
 
+// CUDA function declarations - implemented in src/kernels.cu, when CUDA is available
+// or in src/kernel_cpu_alternatives.c when it is not
+extern void scalar_multiplier(float *A, size_t rows, size_t cols, float c);
+extern void mat_add(float *A_h, float *B_h, size_t rows, size_t cols, float dt);
+extern void diffuse_bad_host(float *A_h, float *B_h, size_t rows, size_t cols, float a);
+extern void set_bnd_host(float *A_h, size_t rows, size_t cols, int b);
+extern void diffuse_jacobi_host(float *A_h, const float *B_h, size_t rows, size_t cols, int b, const float a);
+extern void advect_host(float *d_h, float *d0_h, float *u_h, float *v_h, size_t rows, size_t cols, int b, float dt);
+
 typedef struct {
   int i;
   int j;
@@ -13,6 +22,21 @@ pos mouse_pos_to_index(size_t rows, size_t cols, float scale) {
 
 void add_source(int rows, int cols, float *x, float *s, float dt) {
   mat_add(x, s, rows+2, cols+2, dt);
+}
+
+void set_bnd_cpu(int rows, int cols, int b, float *x) {
+  for (int i = 1; i <= rows; i++) {
+    x[IX(i,      0)] = b == 2 ? -x[IX(i,    1)] :x[IX(i,    1)];
+    x[IX(i, cols+1)] = b == 2 ? -x[IX(i, cols)] :x[IX(i, cols)];
+  }
+  for (int i = 1; i <= cols; i++) {
+    x[IX(0,      i)] = b == 1 ? -x[IX(1,    i)] :x[IX(1,    i)];
+    x[IX(rows+1, i)] = b == 1 ? -x[IX(rows, i)] :x[IX(rows, i)];
+  }
+  x[IX(0,           0)] = 0.5f * (x[IX(1,         0)] + x[IX(0,         1)]);
+  x[IX(0,      cols+1)] = 0.5f * (x[IX(1,    cols+1)] + x[IX(0,      cols)]);
+  x[IX(rows+1,      0)] = 0.5f * (x[IX(rows,      0)] + x[IX(rows+1,       1)]);
+  x[IX(rows+1, cols+1)] = 0.5f * (x[IX(rows, cols+1)] + x[IX(rows+1, cols)]);
 }
 
 void set_bnd(int rows, int cols, int b, float *x) {
@@ -29,18 +53,7 @@ void set_bnd(int rows, int cols, int b, float *x) {
     // cpu
     case 1:
     default:
-      for (int i = 1; i <= rows; i++) {
-        x[IX(i,      0)] = b == 2 ? -x[IX(i,    1)] :x[IX(i,    1)];
-        x[IX(i, cols+1)] = b == 2 ? -x[IX(i, cols)] :x[IX(i, cols)];
-      }
-      for (int i = 1; i <= cols; i++) {
-        x[IX(0,      i)] = b == 1 ? -x[IX(1,    i)] :x[IX(1,    i)];
-        x[IX(rows+1, i)] = b == 1 ? -x[IX(rows, i)] :x[IX(rows, i)];
-      }
-      x[IX(0,           0)] = 0.5f * (x[IX(1,         0)] + x[IX(0,         1)]);
-      x[IX(0,      cols+1)] = 0.5f * (x[IX(1,    cols+1)] + x[IX(0,      cols)]);
-      x[IX(rows+1,      0)] = 0.5f * (x[IX(rows,      0)] + x[IX(rows+1,       1)]);
-      x[IX(rows+1, cols+1)] = 0.5f * (x[IX(rows, cols+1)] + x[IX(rows+1, cols)]);
+      set_bnd_cpu(rows, cols, b, x);
       break;
   }
 }
@@ -77,7 +90,7 @@ void diffuse(int N, int b, float *x, float *x0, float diff, float dt) {
   }
 }
 
-void advect(int N, int b, float *d, float *d0, float *u, float *v, float dt) {
+void advect_cpu(int N, int b, float *d, float *d0, float *u, float *v, float dt) {
   float dt0 = dt * N;
   for (int i = 1; i <= N; i++) {
     for (int j = 1; j <= N; j++) {
@@ -106,6 +119,23 @@ void advect(int N, int b, float *d, float *d0, float *u, float *v, float dt) {
     }
   }
   set_bnd(N, N, b, d);
+}
+
+void advect(int N, int b, float *d, float *d0, float *u, float *v, float dt) {
+  int advect_type = 0;
+
+  switch (advect_type) {
+    // gpu
+    case 0:
+      advect_host(d, d0, u, v, N+2, N+2, b, dt);
+      break;
+
+    // cpu
+    case 1:
+    default:
+      advect(N, b, d, d0, u, v, dt);
+      break;
+  }
 }
 
 void project(int N, float *u, float *v, float *p, float *div) {
