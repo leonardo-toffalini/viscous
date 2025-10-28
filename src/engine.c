@@ -2,12 +2,14 @@
 
 // CUDA function declarations - implemented in src/kernels.cu, when CUDA is available
 // or in src/kernel_cpu_alternatives.c when it is not
+#if CUDA_AVAILABLE
 extern void scalar_multiplier(float *A, size_t rows, size_t cols, float c);
 extern void mat_add(float *A_h, float *B_h, size_t rows, size_t cols, float dt);
 extern void diffuse_bad_host(float *A_h, float *B_h, size_t rows, size_t cols, float a);
 extern void set_bnd_host(float *A_h, size_t rows, size_t cols, int b);
 extern void diffuse_jacobi_host(float *A_h, const float *B_h, size_t rows, size_t cols, int b, const float a);
 extern void advect_host(float *d_h, float *d0_h, float *u_h, float *v_h, size_t rows, size_t cols, int b, float dt);
+#endif
 
 typedef struct {
   int i;
@@ -20,8 +22,30 @@ pos mouse_pos_to_index(size_t rows, size_t cols, float scale) {
   return (pos){i, j};
 }
 
-void add_source(int rows, int cols, float *x, float *s, float dt) {
-  mat_add(x, s, rows+2, cols+2, dt);
+void zero_out(float *x, size_t N) {
+  for (int i = 0; i < N; i++)
+    x[i] = 0;
+}
+
+void mat_add_cpu(size_t rows, size_t cols, float *x, float *s, float dt) {
+  for (int i = 0; i < rows * cols; i++)
+    x[i] += dt * s[i];
+}
+
+void add_source(size_t rows, size_t cols, float *x, float *s, float dt) {
+  int add_source_type = 1 && CUDA_AVAILABLE;
+  switch (add_source_type) {
+    #if CUDA_AVAILABLE
+    case 1:
+      mat_add(x, s, rows+2, cols+2, dt);
+      break;
+    #endif
+
+    case 0:
+    default:
+      mat_add_cpu(rows+2, cols+2, x, s, dt);
+  }
+
 }
 
 void set_bnd_cpu(int rows, int cols, int b, float *x) {
@@ -42,29 +66,34 @@ void set_bnd_cpu(int rows, int cols, int b, float *x) {
 void set_bnd(int rows, int cols, int b, float *x) {
   // the CPU version is faster as the GPU version requires copying the array on to the GPUs global memory,
   // and it does not offset the computational benefit
-  int set_bnd_type = 1;  // Use CPU implementation
+  int set_bnd_type = 0 && CUDA_AVAILABLE;
 
   switch (set_bnd_type) {
     // gpu
-    case 0:
+    #if CUDA_AVAILABLE
+    case 1:
       set_bnd_host(x, rows+2, cols+2, b);
       break;
+    #endif
 
     // cpu
-    case 1:
+    case 0:
     default:
       set_bnd_cpu(rows, cols, b, x);
       break;
   }
 }
 
+#if CUDA_AVAILABLE
 void diffuse_bad(int rows, int cols, int b, float *x, float *x0, float diff, float dt) {
   float a = dt * diff * rows * cols;
 
   diffuse_bad_host(x, x0, rows+2, cols+2, a);
   set_bnd(rows, cols, b, x);
 }
+#endif
 
+#if CUDA_AVAILABLE
 void diffuse_jacobi(int N, int b, float *x, const float *x0, float diff, float dt) {
   const float a = dt * diff * N * N;
 
@@ -73,10 +102,11 @@ void diffuse_jacobi(int N, int b, float *x, const float *x0, float diff, float d
   // while for the cpu version, increasing k, the fps quickly drops
   diffuse_jacobi_host(x, x0, N+2, N+2, b, a);
 }
+#endif
 
 // Gauss-Seidel is way harder to implement on gpu as the cells are not independent
 // Jacobi iteration is easier on the gpu
-void diffuse(int N, int b, float *x, float *x0, float diff, float dt) {
+void diffuse_cpu(int N, int b, float *x, float *x0, float diff, float dt) {
   float a = dt * diff * N * N;
 
   // Gauss-Seidel
@@ -87,6 +117,23 @@ void diffuse(int N, int b, float *x, float *x0, float diff, float dt) {
       }
     }
     set_bnd(N, N, b, x);
+  }
+}
+
+void diffuse(int N, int b, float *x, float *x0, float diff, float dt) {
+  int diffuse_type = 1 && CUDA_AVAILABLE;
+
+  switch (diffuse_type) {
+    #if CUDA_AVAILABLE
+    case 1:
+      diffuse_jacobi(N, b, x, x0, diff, dt);
+      break;
+    #endif
+
+    case 0:
+    default:
+      diffuse_cpu(N, b, x, x0, diff, dt);
+      break;
   }
 }
 
@@ -122,18 +169,20 @@ void advect_cpu(int N, int b, float *d, float *d0, float *u, float *v, float dt)
 }
 
 void advect(int N, int b, float *d, float *d0, float *u, float *v, float dt) {
-  int advect_type = 0;
+  int advect_type = 1 && CUDA_AVAILABLE;
 
   switch (advect_type) {
     // gpu
-    case 0:
+    #if CUDA_AVAILABLE
+    case 1:
       advect_host(d, d0, u, v, N+2, N+2, b, dt);
       break;
+    #endif
 
     // cpu
-    case 1:
+    case 0:
     default:
-      advect(N, b, d, d0, u, v, dt);
+      advect_cpu(N, b, d, d0, u, v, dt);
       break;
   }
 }
@@ -169,7 +218,7 @@ void project(int N, float *u, float *v, float *p, float *div) {
 
 void dens_step(int N, float *x, float *x0, float *u, float *v, float diff, float dt) {
   add_source(N, N, x, x0, dt);
-  SWAP(x0, x); diffuse_jacobi(N, 0, x, x0, diff, dt);
+  SWAP(x0, x); diffuse(N, 0, x, x0, diff, dt);
   SWAP(x0, x); advect(N, 0, x, x0, u, v, dt);
 }
 

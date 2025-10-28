@@ -1,3 +1,12 @@
+// TODO:
+// - add a switch such that if someone is running without nvidia gpu the computations default to cpu
+// - implement advect and project in cuda
+// - probably should do something about the possibility when there are less threads than cells in the array
+// - add more boundary cells, objects in the scene to interact with
+// - currently, it defaults to cuda if not on mac, instead it should default to cuda if it has nvcc
+// - could probably put the main game loop part of the scenes into a function
+// and store a pointer to that function in the scene params struct
+
 #define SINGLE_TU
 
 #include "raylib.h"
@@ -5,7 +14,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
 
 #define N_ 200
 #define ROWS 200
@@ -18,31 +26,11 @@
 #define SWAP(x0, x) {float *tmp=x0; x0=x; x=tmp;}
 #endif
 
-// TODO:
-// - add a switch such that if someone is running without nvidia gpu the computations default to cpu
-// - implement advect and project in cuda
-// - probably should do something about the possibility when there are less threads than cells in the array
-// - add more boundary cells, objects in the scene to interact with
-// - currently, it defaults to cuda if not on mac, instead it should default to cuda if it has nvcc
-
-typedef enum {
-  SCENE_DEFAULT = 0,
-  SCENE_HIGH_DIFFUSION = 1,
-  SCENE_LOW_VISCOSITY = 2,
-  SCENE_TURBULENT = 3,
-  SCENE_SMOKE = 4,
-  SCENE_EMPTY = 5,
-  SCENE_RAYLEIGH_BENARD_CONVECTION = 6, // https://en.wikipedia.org/wiki/Rayleigh%E2%80%93B%C3%A9nard_convection
-  SCENE_COUNT
-} SceneType;
+// change this value to 1 if you are on a machine with and NVIDIA graphics card and you have the CUDA tools downloaded
+#define CUDA_AVAILABLE 0
 
 // Scene selection - change this to switch scenes
 #define SELECTED_SCENE SCENE_SMOKE
-
-// should instead detect if CUDA is available and only then include the cpu alternatives
-#ifdef __APPLE__
-#include "kernel_cpu_alternatives.c"
-#endif
 
 // contains all the logic for the simulation
 #include "engine.c"
@@ -73,6 +61,7 @@ int main(void) {
 
   Texture2D texture = LoadTextureFromImage(img);
 
+  // convert red channel only color to something else
   Shader colorShader = LoadShader(NULL, "src/color_conversion.frag");
 
   char grid_size_buffer[100];
@@ -82,15 +71,6 @@ int main(void) {
   char visc_buffer[100];
   sprintf(visc_buffer, "visc=%.0e", params.visc);
   
-  const char* scene_names[] = {
-    "Default",
-    "High Diffusion", 
-    "Low Viscosity",
-    "Turbulent",
-    "Smoke",
-    "Empty",
-    "R-B convection",
-  };
   char scene_buffer[100];
   sprintf(scene_buffer, "Scene: %s", scene_names[SELECTED_SCENE]);
 
@@ -99,7 +79,8 @@ int main(void) {
   while (!WindowShouldClose()) {
     dt = GetFrameTime();
 
-    scalar_multiplier(dens_prev, params.rows+2, params.cols+2, 0.0f);
+    // scalar_multiplier(dens_prev, params.rows+2, params.cols+2, 0.0f);
+    zero_out(dens_prev, (params.rows+2) * (params.cols+2));
     
     if (SELECTED_SCENE == SCENE_SMOKE) {
       int center = params.N / 2;

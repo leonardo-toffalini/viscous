@@ -1,5 +1,26 @@
 #ifdef SINGLE_TU
 
+typedef enum {
+  SCENE_DEFAULT = 0,
+  SCENE_HIGH_DIFFUSION = 1,
+  SCENE_LOW_VISCOSITY = 2,
+  SCENE_TURBULENT = 3,
+  SCENE_SMOKE = 4,
+  SCENE_EMPTY = 5,
+  SCENE_RAYLEIGH_BENARD_CONVECTION = 6, // https://en.wikipedia.org/wiki/Rayleigh%E2%80%93B%C3%A9nard_convection
+  SCENE_COUNT
+} SceneType;
+
+  const char* scene_names[] = {
+    "Default",
+    "High Diffusion",
+    "Low Viscosity",
+    "Turbulent",
+    "Smoke",
+    "Empty",
+    "R-B convection",
+  };
+
 typedef struct {
   int N;
   int rows;
