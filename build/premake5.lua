@@ -24,6 +24,14 @@ newoption({
 	default = "glfw",
 })
 
+function is_cuda_available()
+	local handle = io.popen("nvcc --version 2>&1")
+	local output = handle:read("*a")
+	handle:close()
+	-- Checks if output contains 'Cuda compilation tools'
+	return output and output:find("Cuda compilation tools") ~= nil
+end
+
 function download_progress(total, current)
 	local ratio = current / total
 	ratio = math.min(math.max(ratio, 0), 1)
@@ -232,30 +240,31 @@ filter({})
 ------------------------------------
 --          CUDA KERNELS          --
 ------------------------------------
-filter("system:not macosx")
-project("cuda_kernels")
-kind("StaticLib")
-language("C++")
-location("build_files/")
-targetdir("../bin/%{cfg.buildcfg}/cuda")
+if is_cuda_available() then
+	project("cuda_kernels")
+	kind("StaticLib")
+	language("C++")
+	location("build_files/")
+	targetdir("../bin/%{cfg.buildcfg}/cuda")
 
-files({ "../src/kernels.cu" })
-objdir("%{prj.location}/obj/%{cfg.platform}/%{cfg.buildcfg}/%{prj.name}")
+	files({ "../src/kernels.cu" })
+	objdir("%{prj.location}/obj/%{cfg.platform}/%{cfg.buildcfg}/%{prj.name}")
 
--- Tell Premake to treat .cu files with nvcc
--- We use a custom build command for .cu files to call nvcc
-filter({ "files:**.cu" })
-buildcommands({
-	"nvcc -c %{file.abspath} -o %{cfg.objdir}/%{file.basename}.o",
-})
-buildoutputs({ "%{cfg.objdir}/%{file.basename}.o" })
+	-- Tell Premake to treat .cu files with nvcc
+	-- We use a custom build command for .cu files to call nvcc
+	filter({ "files:**.cu" })
+	buildcommands({
+		"nvcc -c %{file.abspath} -o %{cfg.objdir}/%{file.basename}.o",
+	})
+	buildoutputs({ "%{cfg.objdir}/%{file.basename}.o" })
 
-filter({})
+	filter({})
 
--- Include directories if needed for CUDA
-includedirs({ "src" })
+	-- Include directories if needed for CUDA
+	includedirs({ "src" })
 
-filter({})
+	filter({})
+end
 
 ------------------------------------
 --            RAYLIB              --
