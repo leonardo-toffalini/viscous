@@ -13,7 +13,7 @@
 #let exercise = exercise.with(counter: exercise-counter)
 
 #let solution = proof.with(
-    title: "Solution",
+  title: "Solution",
 )
 
 #align(center)[
@@ -245,5 +245,106 @@ $rho_h$ is the density field on the discretized domain, and $S_h$ is the matrix
 containing the sources at each grid cell.
 
 == Diffusion
+#align(center)[
 
+  #let semi_gray = gray.transparentize(50%)
+
+  #figure(
+    cetz.canvas({
+      import cetz.draw: *
+
+      rect((-1, -1), (1, 1), name: "middle")
+      rect((-3, -1), (-1, 1), name: "left")
+      rect((1, -1), (3, 1), name: "right")
+      rect((-1, 1), (1, 3), name: "top")
+      rect((-1, -3), (1, -1), name: "bottom")
+
+      // cell index labels
+      // content("middle", [$i, j$])
+      // content("left", [$i, j-1$])
+      // content("right", [$i, j+1$])
+      // content("top", [$i-1, j$])
+      // content("bottom", [$i+1, j$])
+
+      // left <-> middle
+      line((-2, -0.1), (-0.5, -0.1), stroke: gray, mark: (end: ">", scale: 0.5))
+      line((-0.5, 0.1), (-2, 0.1), stroke: gray, mark: (end: ">", scale: 0.5))
+
+      // right <-> middle
+      line((2, -0.1), (0.5, -0.1), stroke: gray, mark: (end: ">", scale: 0.5))
+      line((0.5, 0.1), (2, 0.1), stroke: gray, mark: (end: ">", scale: 0.5))
+
+      // top <-> middle
+      line((-0.1, 2), (-0.1, 0.5), stroke: gray, mark: (end: ">", scale: 0.5))
+      line((0.1, 0.5), (0.1, 2), stroke: gray, mark: (end: ">", scale: 0.5))
+
+      // bottom <-> middle
+      line((-0.1, -2), (-0.1, -0.5), stroke: gray, mark: (end: ">", scale: 0.5))
+      line((0.1, -0.5), (0.1, -2), stroke: gray, mark: (end: ">", scale: 0.5))
+    }),
+
+    caption: [Five point stencil intuition]
+  )<fig:5-point-stencil-intuition>
+]
+
+In essence this is just a finite difference method of a five point stencil.
+
+Here is the discretization matrix $A_h$ for this five point stencil.
+
+#align(center)[
+
+  #let semi_gray = gray.transparentize(50%)
+
+  #figure(
+    cetz.canvas({
+      import cetz.draw: *
+
+      content((-5.3, 4), anchor: "east", [$n$])
+      content((-4, 5.3), anchor: "south", [$n$])
+
+      rect((-5, -5), (5, 5))
+      rect((-5, 5), (-3, 3), name: "topleft")
+      line((-4.95, 4.95), (-3.05, 3.05), stroke: 2pt + green)
+      line((-4.75, 4.95), (-3.05, 3.25), stroke: 2pt + red)
+      line((-4.95, 4.75), (-3.25, 3.05), stroke: 2pt + red)
+      line((-4.95, 2.95), (-3.05, 1.05), stroke: 2pt + orange)
+
+      rect((-3, 3), (-1, 1))
+      line((-2.95, 2.95), (-1.05, 1.05), stroke: 2pt + green)
+      line((-2.75, 2.95), (-1.05, 1.25), stroke: 2pt + red)
+      line((-2.95, 2.75), (-1.25, 1.05), stroke: 2pt + red)
+      line((-2.95, 0.95), (-1.05, -0.95), stroke: 2pt + orange)
+      line((-2.95, 4.95), (-1.05, 3.05), stroke: 2pt + orange)
+
+      rect((-1, 1), (1, -1))
+      line((-0.95, 0.95), (0.95, -0.95), stroke: 2pt + green)
+      line((-0.75, 0.95), (0.95, -0.75), stroke: 2pt + red)
+      line((-0.95, 0.75), (0.75, -0.95), stroke: 2pt + red)
+      line((-0.95, 0.95 - 2), (0.95, -0.95 - 2), stroke: 2pt + orange)
+      line((-0.95, 0.95 + 2), (0.95, -0.95 + 2), stroke: 2pt + orange)
+
+      rect((1, -1), (3, -3))
+      line((1.05, -1.05), (2.95, -2.95), stroke: 2pt + green)
+      line((1.25, -1.05), (2.95, -2.75), stroke: 2pt + red)
+      line((1.05, -1.25), (2.75, -2.95), stroke: 2pt + red)
+      line((1.05, -1.05 - 2), (2.95, -2.95 - 2), stroke: 2pt + orange)
+      line((1.05, -1.05 + 2), (2.95, -2.95 + 2), stroke: 2pt + orange)
+
+      rect((3, -3), (5, -5))
+      line((3.05, -3.05), (4.95, -4.95), stroke: 2pt + green)
+      line((3.25, -3.05), (4.95, -4.75), stroke: 2pt + red)
+      line((3.05, -3.25), (4.75, -4.95), stroke: 2pt + red)
+      line((3.05, -3.05 + 2), (4.95, -4.95 + 2), stroke: 2pt + orange)
+
+    }),
+
+    caption: [Five point stencil matrix]
+  )<fig:5-point-stencil-matrix>
+]
+
+Let us denote the Kronecker product of two matrices as $A times.circle B$ and let $B = "tridiag"(-1, 2, -1)$. Then, the above discretization matrix of the five point stencil an be achieved with the following succinct formula: $I times.circle B + B times.circle I$.
+
+However, this matrix is so sparse, that we need not even construct it, as we
+can just solve the resulting linear system of equations with an iterative
+method without constructing the full matrix.
 
