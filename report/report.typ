@@ -22,7 +22,8 @@
   Toffalini Leonardo
 ]
 
-#text(red)[*FIRST DRAFT*] \ at first i will ramble on about anything, then i will trim the fat
+#text(red)[*FIRST DRAFT*] \ at first i will ramble on about anything, then i
+will trim the fat
 
 All the code can be found at #link("https://github.com/leonardo-toffalini/viscous")
 
@@ -32,7 +33,8 @@ with uniform viscosity are as follows:
 
 #set math.equation(numbering: "(1)")
 $
-  (partial bold(u))/(partial t) + (bold(u) dot nabla) bold(u) = nu Delta bold(u) - 1/rho nabla p + 1/rho bold(f).
+  (partial bold(u))/(partial t) + (bold(u) dot nabla) bold(u) = nu Delta
+bold(u) - 1/rho nabla p + 1/rho bold(f).
 $<eq:navier-stokes>
 #set math.equation(numbering: none)
 
@@ -51,7 +53,8 @@ a viscous incompressible fluid.
 For some, that have not yet encountered the differential operators used in the
 above formulation, we give a short summary:
 
-The $nabla$ operator represents the vector $(partial_1, partial_2, dots, partial_n)$, thus
+The $nabla$ operator represents the vector $(partial_1, partial_2, dots,
+partial_n)$, thus
 $
   nabla u = (partial_1 u, partial_2 u, dots, partial_n u)
 $
@@ -81,12 +84,15 @@ In broad strokes the parts can be described as follows:
 1. Advection -- How the velocity moves.
 2. Diffusion -- How the velocity spreads out.
 3. Internal source -- How the velocity points towards parts of lesser pressure.
-4. External source -- How the velocity is changed subject to external intervention, like a fan blowin air.
+4. External source -- How the velocity is changed subject to external
+   intervention, like a fan blowin air.
 
 
 = Equations for fluid simulation
-It is best to mention here, in this section, that the described method is not exact.
-This, however, will not be to our detriment, as our aim here is to show interesting and
+It is best to mention here, in this section, that the described method is not
+exact.
+This, however, will not be to our detriment, as our aim here is to show
+interesting and
 realistic visuals as opposed to precise measurements.
 
 For our purposes we will rearrange @eq:navier-stokes such that we have only the
@@ -94,7 +100,8 @@ time derivate of the velocity on the left and omit the internal force part, as
 we will recover this part later. So we arrive at the equation which we will solve:
 
 $
-  (partial bold(u))/(partial t) = - (bold(u) dot nabla)bold(u) + nu Delta bold(u) + 1/rho bold(f).
+  (partial bold(u))/(partial t) = - (bold(u) dot nabla)bold(u) + nu Delta
+bold(u) + 1/rho bold(f).
 $
 
 The evolving of the velocity field in and of itself is not that interesting to
@@ -293,8 +300,6 @@ Here is the discretization matrix $A_h$ for this five point stencil.
 
 #align(center)[
 
-  #let semi_gray = gray.transparentize(50%)
-
   #figure(
     cetz.canvas({
       import cetz.draw: *
@@ -342,9 +347,56 @@ Here is the discretization matrix $A_h$ for this five point stencil.
   )<fig:5-point-stencil-matrix>
 ]
 
-Let us denote the Kronecker product of two matrices as $A times.circle B$ and let $B = "tridiag"(-1, 2, -1)$. Then, the above discretization matrix of the five point stencil an be achieved with the following succinct formula: $I times.circle B + B times.circle I$.
+Let us denote the Kronecker product of two matrices as $A times.circle B$ and
+let $B = "tridiag"(-1, 2, -1)$. Then, the above discretization matrix of the
+five point stencil an be achieved with the following succinct formula: $I
+times.circle B + B times.circle I$.
 
 However, this matrix is so sparse, that we need not even construct it, as we
 can just solve the resulting linear system of equations with an iterative
 method without constructing the full matrix.
 
+#align(center)[
+  #figure(
+    cetz.canvas({
+      import cetz.draw: *
+
+      let step = 1
+      let start = -3
+      let values = range(0, int(2 * calc.abs(start) / step)).map(x => start + x * step)
+      grid((start, start), (-start, -start), step: step)
+
+      for i in values {
+        for j in values {
+          let y = i + step/2
+          let x = j + step/2
+          let u = calc.sin(y/2) / 2
+          let v = -calc.sin(x/2) / 2
+          line((x, y), (x + u, y + v),
+            stroke: gray + 0.4pt,
+            mark: (end: ">", scale: 0.6))
+        }
+      }
+
+      let (a1, b1, c1) = ((-0.5, 2.5), (-1.7, 1.8), (-1.3, 2.6))
+      let (a2, b2, c2) = ((-0.5, 1.5), (-1.4, 0.9), (-1.1, 1.6))
+      let (a3, b3, c3) = ((-1.5, 1.5), (-2.1, 0.5), (-1.95, 1.3))
+      // line(a2, c2, b2, stroke: gray + 1.5pt)
+      bezier(a1, b1, c1,
+        stroke: black + 1.5pt,
+        mark: (start: "o", end: ">", scale: 0.6)
+      )
+      bezier(a2, b2, c2,
+        stroke: black + 1.5pt,
+        mark: (start: "o", end: ">", scale: 0.6)
+      )
+      bezier(a3, b3, c3,
+        stroke: black + 1.5pt,
+        mark: (start: "o", end: ">", scale: 0.6)
+      )
+
+
+    }),
+    caption: [Semi Lagrange]
+  )<fig:semi-lagrange>
+]
