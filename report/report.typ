@@ -356,6 +356,30 @@ However, this matrix is so sparse, that we need not even construct it, as we
 can just solve the resulting linear system of equations with an iterative
 method without constructing the full matrix.
 
+== Advection
+
+Make it clear that this is the first crucial idea of the method. The idea is
+that isntead of the solving the advection equation as a partial differential
+equation, we trace a path backwards to where a fluid particle could have come
+from.
+
+The problem with solving the advection equation is that it is dependant on the
+velocity vector, in contrast to the diffusion step where it was only dependant
+on the previous state of the density field.
+
+After tracing back the possible locations where fluid particles could have come
+from we might get a particle that came from not the exact center of a grid.
+Remember, that we established that we shall think of the fluid as point masses
+centered at the middle of the grid cells. If a particle came from not the dead
+center then we must somehow give meaning to it too. In this case we will take
+the linear interpolation of the four closes neighbours of where the particle
+came from.
+
+Fluid simulations methods that solve a partial differential equation on a
+discretized space are called Lagrangian, whereas methods that simulate fluids
+as a collection of particles are called Eulerian. For this reason this method
+is sometimes called semi-Lagrangian.
+
 #align(center)[
   #figure(
     cetz.canvas({
@@ -370,8 +394,8 @@ method without constructing the full matrix.
         for j in values {
           let y = i + step/2
           let x = j + step/2
-          let u = calc.sin(y/2) / 2
-          let v = -calc.sin(x/2) / 2
+          let u = y/4
+          let v = -x/4
           line((x, y), (x + u, y + v),
             stroke: gray + 0.4pt,
             mark: (end: ">", scale: 0.6))
@@ -400,3 +424,33 @@ method without constructing the full matrix.
     caption: [Semi Lagrange]
   )<fig:semi-lagrange>
 ]
+
+= Evolving velocites
+Recall, that the velocity equation is almost the same as the density equation.
+
+This is where the second novel idea comes into play. Remember in the second
+section we mentioned that we shall omit a part of the equation to make it
+simpler and handle it later, now is the time to do so. The part we left out
+made sure that the velocity field was divergence free, meaning that it was mass
+conserving. This is intuitive about fluids, that a fluid can not just fluid
+outward from a single point, if some fluid flows out from a point, then an
+equal amount must flow into said point.
+
+Since we did not take care to hold the divergence free property during the
+diffusion and advection steps we quite possible end up with a velocity field
+which has non zero divergence. To combat this we rely on a result from vector
+calculus which states that a vector field can be decomposed as a sum of a field
+with no divergence and one which is the gradient of a scalar potential. This
+result is called the Helmholtz--Hodge decomposition.
+
+Derive the Possion equation to get the Hodge decomposition of the vector field.
+
+#include "hodge.typ"
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
+fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+culpa qui officia deserunt mollit anim id est laborum.
+
