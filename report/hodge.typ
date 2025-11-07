@@ -46,16 +46,16 @@
         rect((start_x, start_y), (start_x + size, start_y + size), stroke: 0.1pt)
       }
 
-      let size = 6
-      quiver(-10, -3, size, step, comb_u, comb_v)
-      quiver(-3, -3, size, step, rot_u, rot_v)
-      quiver(4, -3, size, step, div_u_vis, div_v_vis)
+      let size = 4
+      quiver(-8, -2, size, step, comb_u, comb_v)
+      quiver(-2, -2, size, step, rot_u, rot_v)
+      quiver(4, -2, size, step, div_u_vis, div_v_vis)
 
-      content((-7, 3.1), [combined field], anchor: "south")
-      content((0, 3.1), [rotation field], anchor: "south")
-      content((7, 3.02), [divergence field], anchor: "south")
-      content((-3.5, 0), text(size: 16pt)[$=$])
-      content((3.5, 0), text(size: 16pt)[$+$])
+      content((-6, 2.1), [combined field], anchor: "south")
+      content((0, 2.1), [rotation field], anchor: "south")
+      content((6, 2.02), [divergence field], anchor: "south")
+      content((-3, 0), text(size: 16pt)[$=$])
+      content((3, 0), text(size: 16pt)[$+$])
 
     }),
     caption: [Helmholtz--Hodge decomposition]

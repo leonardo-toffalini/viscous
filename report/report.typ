@@ -16,6 +16,8 @@
   title: "Solution",
 )
 
+#let todo(body) = [#text(red)[*TODO*] #body]
+
 #align(center)[
   #text(size: 25pt)[*Technical Report*] \
 
@@ -49,12 +51,14 @@ We will not go into the details of deriving the above equations, instead we
 will just take it as granted that they truly formulate the evolving velocity of
 a viscous incompressible fluid.
 
+#todo[this notation introduction is janky. Refer the reader to
+Besenyei, Komornik, Simon Parciális differenciál egyenletek 4.5.]
 
 For some, that have not yet encountered the differential operators used in the
 above formulation, we give a short summary:
 
-The $nabla$ operator represents the vector $(partial_1, partial_2, dots,
-partial_n)$, thus
+The $nabla$ operator formally represents the $(partial_1, partial_2, dots,
+partial_n)$ vector, thus
 $
   nabla u = (partial_1 u, partial_2 u, dots, partial_n u)
 $
@@ -443,14 +447,40 @@ calculus which states that a vector field can be decomposed as a sum of a field
 with no divergence and one which is the gradient of a scalar potential. This
 result is called the Helmholtz--Hodge decomposition.
 
-Derive the Possion equation to get the Hodge decomposition of the vector field.
-
 #include "hodge.typ"
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
+The Helmholtz--Hodge decomposition states that any vector field $bold(w)$ can
+be uniquely decomposed into the sum of a divergence field and a rotation field,
+more consicely
+$
+  bold(w) = bold(u) + nabla q,
+$
+where $nabla dot (bold(u)) = 0$, and $q$ is a scalar field. @fig:hodge
+illustrates the idea of the decomposition.
+
+Formally taking the dot product with the $nabla$ operator of both sides, we get
+$
+  nabla dot bold(w) &= nabla dot bold(u) + nabla dot nabla q \
+  nabla dot bold(w) &= 0 + nabla dot nabla q \
+  nabla dot bold(w) &= Delta q
+$
+
+The relation between $bold(w)$ and $q$ we just derived is a simple Poisson
+eqation for $q$, which can be solved with the finite difference method we
+outlined in the previous section. After solving for $q$, we can extract
+$bold(u)$ as
+$
+  bold(u) = bold(w) - nabla q.
+$
+
+With this result in our hands we can finally resolve the mass conserving
+property of the velocity of the simulated fluid by decomposing the resulting
+field after the last step into a divergence free field.
+
+$
+  u_1 -->^"add source" u_2 -->^"diffusion" u_3 -->^"advection" u_4 -->^"projection" u_5
+$
+
+#include "projection.typ"
+
 
