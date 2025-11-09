@@ -29,7 +29,41 @@ will trim the fat
 
 All the code can be found at #link("https://github.com/leonardo-toffalini/viscous")
 
-= Introduction to the equations of fluids
+= Notation
+In this report we are going to heavily rely on differential operators, as this
+project is about solving a partial differential equation. Thus, before delving
+into the details of the main topic at hand, we shall quickly remind the reader
+of the notations that the following sections rely on. For a more complete
+introduction to the notations, we refer the reader to consult Besenyei,
+Komornik, Simon: Parciális differenciál egyenletek 4.5.
+
+Let $nabla$ (formally) represent the $(partial_1, partial_2, dots, partial_n)$
+vector, where $n$ is always deduced by the context.
+
+With the help of this vector we can define the _gradient_ of a field
+as
+$
+  nabla u = (partial_1 u, partial_2 u, dots, partial_n u).
+$
+
+Moreover, as $nabla$ is a vector, we can apply vector operations to it to get different operations, such as
+
+$
+  u dot nabla = sum_(i=1)^n u_i partial_i
+$
+or
+$
+  (u dot nabla)u = sum_(i=1)^n u_i partial_i u.
+$
+
+The $Delta$ operator, called the *Laplace operator*, sometimes written as
+$nabla dot nabla$ or $nabla^2$, acts as follows:
+$
+  nabla dot nabla u = Delta u = sum_(i=1)^n (partial_i u)^2.
+$
+
+
+= The equations of fluids
 The advective form of the *Navier-Stokes equations* for an incompressible fluid
 with uniform viscosity are as follows:
 
@@ -39,43 +73,24 @@ $
 bold(u) - 1/rho nabla p + 1/rho bold(f).
 $<eq:navier-stokes>
 #set math.equation(numbering: none)
-
-Meaning of the variables:
-1. $bold(u)$ is the velocity vector field.
-2. $bold(f)$ is the external forces.
-3. $rho$ is the scalar density field.
-4. $p$ is the pressure field.
-5. $nu$ is the kinematic viscosity.
+where
+- $bold(u)$ is the velocity vector field.
+- $bold(f)$ is the external forces.
+- $rho$ is the scalar density field.
+- $p$ is the pressure field.
+- $nu$ is the kinematic viscosity.
 
 We will not go into the details of deriving the above equations, instead we
 will just take it as granted that they truly formulate the evolving velocity of
 a viscous incompressible fluid.
 
-#todo[this notation introduction is janky. Refer the reader to
-Besenyei, Komornik, Simon Parciális differenciál egyenletek 4.5.]
+The intrigued reader may find satisfaction in exploring the derivation of the
+above equations in Chorin, Marsden: A mathematical introduction to fluid
+mechanics.
 
 For some, that have not yet encountered the differential operators used in the
 above formulation, we give a short summary:
 
-The $nabla$ operator formally represents the $(partial_1, partial_2, dots,
-partial_n)$ vector, thus
-$
-  nabla u = (partial_1 u, partial_2 u, dots, partial_n u)
-$
-
-$
-  u dot nabla = sum_(i=1)^n u_i partial_i
-$
-
-$
-  (u dot nabla)u = sum_(i=1)^n u_i partial_i u
-$
-
-The $Delta$ operator, called the *Laplace operator*, sometimes written as
-$nabla dot nabla = nabla^2$, acts as follows:
-$
-  nabla dot nabla u = Delta u = sum_(i=1)^n (partial_i u)^2
-$
 
 Explanation of the different parts of @eq:navier-stokes:
 $
@@ -89,15 +104,14 @@ In broad strokes the parts can be described as follows:
 2. Diffusion -- How the velocity spreads out.
 3. Internal source -- How the velocity points towards parts of lesser pressure.
 4. External source -- How the velocity is changed subject to external
-   intervention, like a fan blowin air.
+   intervention, like a fan blowing air.
 
 
 = Equations for fluid simulation
-It is best to mention here, in this section, that the described method is not
-exact.
-This, however, will not be to our detriment, as our aim here is to show
-interesting and
-realistic visuals as opposed to precise measurements.
+It is best to mention here, in this section, that the described method will not
+be exact. This, however, will not be to our detriment, as our aim here is to
+show interesting and realistic visuals as opposed to precise measurements
+useful for engineering efforts.
 
 For our purposes we will rearrange @eq:navier-stokes such that we have only the
 time derivate of the velocity on the left and omit the internal force part, as
@@ -117,16 +131,17 @@ $
   (partial rho)/(partial t) = -(bold(u) dot nabla)rho + kappa Delta rho + S.
 $
 
-The astute reader might find this equation offly similar to that of the
+The astute reader might find this equation quite similar to that of the
 velocity field, which is by no means a coincidence as the same broad strokes apply
 to the density field too, which are: advection, diffusion, and external sources.
 The only thing we must be careful of, is that the density is a scalar field, in
 contrast to the velocity, which is a vector field.
 
-The problem in this state is incomplete, we must also specify a boundary
-condtion. In our endevour to simulate a fluid, we will work with the
-Dirichlet-boundary condition, which prescribes that the values on the boundary
-must vanish. We can formulate the previous statement as follows:
+The partial differential equation by itself does not result in a unique
+solution for us to find, for this we must also specify a boundary condition.
+In our endeavor to simulate a fluid, we will work with the Dirichlet-boundary
+condition, which prescribes that the values on the boundary must vanish. We can
+formulate the previous statement as follows:
 $
   u|_(partial Omega) &= 0 \
   rho|_(partial Omega) &= 0,
@@ -138,16 +153,16 @@ The equations presented in the previous sections hold on the entire
 $n$-dimensional space in which the fluid resides. However, when numerically
 solving a partial differential equation one often discretizes the space into
 small rectangles and only bothers to calculate the solution on these
-rectangles. For our purposes we will confine ourselves to the $2$-dimensianal
+rectangles. For our purposes we will confine ourselves to the $2$-dimensional
 plane, but everything mentioned hereafter can be easily extended to higher
 dimensions.
 
-We will make another simplification, which is to only consider a rectangulare
+We will make another simplification, which is to only consider a rectangular
 domain. This makes the calculations easier to handle as matrix operations,
 however, one is free to extend the domain to more complex shapes by exercising
 proper caution when handling the boundary. @fig:fluid-in-a-box shows a
 schematic diagram of how one must imagine a grid on a rectangular domain.
-Notice, how we introduced a $0$-th and an $(N+1)$-th row and column to handle
+Notice, how we introduced a $0$th and an $(N+1)$th row and column to handle
 the boundary, this way it is clear that we will be simulating the fluid on an
 $N times N$ grid on the inside.
 
@@ -180,19 +195,15 @@ $N times N$ grid on the inside.
     content((3, 0), text(size: 12pt)[$partial Omega$])
   }),
 
-    caption: [Discretization of the domain.]
+    caption: [Discretization of the rectangular domain.]
   )<fig:fluid-in-a-box>
 ]
 
-As mentioned in the previous sections, to simulate the change in time of both
-the velocity and the density, we must simulate three steps: advection,
-diffusion, and external sources.
-
 = Moving densities
 
-In our simulation, we will solve the parts of the simplyfied Navier-Stokes
+In our simulation, we will solve the parts of the simplified Navier-Stokes
 equations for the density field one by one. Starting with the simplest, adding
-additional density, then diffusion, and lastly advectiong. The simulation steps
+additional density, then diffusion, and lastly advection. The simulation steps
 can be seen in @fig:moving-density, where one most imagine applying the steps
 in order from left to right, and repeating the last three steps, while the
 simulation is running.
@@ -363,12 +374,12 @@ method without constructing the full matrix.
 == Advection
 
 Make it clear that this is the first crucial idea of the method. The idea is
-that isntead of the solving the advection equation as a partial differential
+that instead of the solving the advection equation as a partial differential
 equation, we trace a path backwards to where a fluid particle could have come
 from.
 
-The problem with solving the advection equation is that it is dependant on the
-velocity vector, in contrast to the diffusion step where it was only dependant
+The problem with solving the advection equation is that it is dependent on the
+velocity vector, in contrast to the diffusion step where it was only dependent
 on the previous state of the density field.
 
 After tracing back the possible locations where fluid particles could have come
@@ -376,7 +387,7 @@ from we might get a particle that came from not the exact center of a grid.
 Remember, that we established that we shall think of the fluid as point masses
 centered at the middle of the grid cells. If a particle came from not the dead
 center then we must somehow give meaning to it too. In this case we will take
-the linear interpolation of the four closes neighbours of where the particle
+the linear interpolation of the four closes neighbors of where the particle
 came from.
 
 Fluid simulations methods that solve a partial differential equation on a
@@ -429,7 +440,7 @@ is sometimes called semi-Lagrangian.
   )<fig:semi-lagrange>
 ]
 
-= Evolving velocites
+= Evolving velocities
 Recall, that the velocity equation is almost the same as the density equation.
 
 This is where the second novel idea comes into play. Remember in the second
@@ -451,7 +462,7 @@ result is called the Helmholtz--Hodge decomposition.
 
 The Helmholtz--Hodge decomposition states that any vector field $bold(w)$ can
 be uniquely decomposed into the sum of a divergence field and a rotation field,
-more consicely
+more concisely
 $
   bold(w) = bold(u) + nabla q,
 $
@@ -466,7 +477,7 @@ $
 $
 
 The relation between $bold(w)$ and $q$ we just derived is a simple Poisson
-eqation for $q$, which can be solved with the finite difference method we
+equation for $q$, which can be solved with the finite difference method we
 outlined in the previous section. After solving for $q$, we can extract
 $bold(u)$ as
 $
@@ -477,6 +488,7 @@ With this result in our hands we can finally resolve the mass conserving
 property of the velocity of the simulated fluid by decomposing the resulting
 field after the last step into a divergence free field.
 
+One can then imagine the simulation steps as follows:
 $
   u_1 -->^"add source" u_2 -->^"diffusion" u_3 -->^"advection" u_4 -->^"projection" u_5
 $
