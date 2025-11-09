@@ -38,6 +38,17 @@
 // contains all the logic for setting up the predefined scenes
 #include "scenes.c"
 
+void keyboard_callback(SceneParams params);
+void click_callback(float *dens_prev, float *u_prev, SceneParams params);
+void drag_callback(SceneParams params, float *u_prev, float *v_prev);
+
+int first_mouse = 1;
+float last_x = 800.0f / 2;
+float last_y = 800.0f / 2;
+float force_magnitude = 0.8f;
+int force_radius = 3;
+int source_radius = 1;
+
 int main(void) {
   SceneParams params;
   setup_scene(&params, SELECTED_SCENE);
@@ -64,15 +75,6 @@ int main(void) {
   // convert red channel only color to something else
   Shader colorShader = LoadShader(NULL, "src/color_conversion.frag");
 
-  char grid_size_buffer[100];
-  sprintf(grid_size_buffer, "N=%d", params.N);
-  char diff_buffer[100];
-  sprintf(diff_buffer, "diff=%.0e", params.diff);
-  char visc_buffer[100];
-  sprintf(visc_buffer, "visc=%.0e", params.visc);
-  
-  char scene_buffer[100];
-  sprintf(scene_buffer, "Scene: %s", scene_names[SELECTED_SCENE]);
 
   SetTargetFPS(MAX_FPS);
 
@@ -118,17 +120,7 @@ int main(void) {
       u[IX(params.N/2, params.N/2)] = params.initial_u_velocity;
       v[IX(params.N/2, params.N/2)] = params.initial_v_velocity;
     }
-
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-      pos p = mouse_pos_to_index(params.rows+2, params.cols+2, params.scale);
-      // add source to dens
-      for (int ioff = -1; ioff < 1; ioff++)
-        for (int joff = -1; joff < 1; joff++)
-          dens_prev[IX(p.i + ioff, p.j + joff)] += 10.0f;
-
-      // add upward vel
-      u_prev[IX(p.i, p.j)] += -2.7f;
-    }
+    click_callback(dens_prev, u_prev, params);
 
     vel_step(params.N, u, v, u_prev, v_prev, params.visc, dt);
     dens_step(params.N, dens, dens_prev, u, v, params.diff, dt);
@@ -142,16 +134,9 @@ int main(void) {
     DrawTextureEx(texture, (Vector2){1, 1}, 0.0f, params.scale, WHITE);
     EndShaderMode();
     
-    // Display parameters
-    if (IsKeyDown(KEY_SPACE)) {
-      DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), ColorAlpha(BLACK, 0.6f));
+    keyboard_callback(params);
+    drag_callback(params, u_prev, v_prev);
 
-      DrawFPS(10, 10);
-      DrawText(scene_buffer, 10, 40, 20, RAYWHITE);
-      DrawText(grid_size_buffer, params.scale * params.cols - 60, 10, 20, RAYWHITE);
-      DrawText(diff_buffer, params.scale * params.cols - 100, params.scale * params.cols - 35, 20, RAYWHITE);
-      DrawText(visc_buffer, params.scale * params.cols - 100, params.scale * params.cols - 15, 20, RAYWHITE);
-    }
     EndDrawing();
   }
 
@@ -160,5 +145,66 @@ int main(void) {
   CloseWindow();
 
   return 0;
+}
+
+void click_callback(float *dens_prev, float *u_prev, SceneParams params) {
+  if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+    pos p = mouse_pos_to_index(params.rows+2, params.cols+2, params.scale);
+    // add source to dens
+    for (int ioff = -source_radius; ioff < source_radius; ioff++)
+      for (int joff = -source_radius; joff < source_radius; joff++)
+        dens_prev[IX(p.i + ioff, p.j + joff)] += 10.0f;
+  }
+}
+
+void drag_callback(SceneParams params, float *u_prev, float *v_prev) {
+  int xpos = GetMouseX();
+  int ypos = GetMouseY();
+
+  if (first_mouse) {
+    last_x = xpos;
+    last_y = ypos;
+    first_mouse = 0;
+  }
+  float xoffset = xpos - last_x;
+  float yoffset = ypos - last_y;
+
+  if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+    // debug line
+    // DrawLine(last_x, last_y, xpos, ypos, RED);
+
+    pos p = mouse_pos_to_index(params.rows+2, params.cols+2, params.scale);
+    // add source to dens
+    for (int ioff = -force_radius; ioff < force_radius; ioff++)
+      for (int joff = -force_radius; joff < force_radius; joff++) {
+        u_prev[IX(p.i + ioff, p.j + joff)] += yoffset * force_magnitude;
+        v_prev[IX(p.i + ioff, p.j + joff)] += xoffset * force_magnitude;
+      }
+  }
+
+  last_x = xpos;
+  last_y = ypos;
+
+}
+
+void keyboard_callback(SceneParams params) {
+  char grid_size_buffer[100];
+  sprintf(grid_size_buffer, "N=%d", params.N);
+  char diff_buffer[100];
+  sprintf(diff_buffer, "diff=%.0e", params.diff);
+  char visc_buffer[100];
+  sprintf(visc_buffer, "visc=%.0e", params.visc);
+
+  char scene_buffer[100];
+  sprintf(scene_buffer, "Scene: %s", scene_names[SELECTED_SCENE]);
+  if (IsKeyDown(KEY_SPACE)) {
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), ColorAlpha(BLACK, 0.6f));
+
+    DrawFPS(10, 10);
+    DrawText(scene_buffer, 10, 40, 20, RAYWHITE);
+    DrawText(grid_size_buffer, params.scale * params.cols - 60, 10, 20, RAYWHITE);
+    DrawText(diff_buffer, params.scale * params.cols - 100, params.scale * params.cols - 35, 20, RAYWHITE);
+    DrawText(visc_buffer, params.scale * params.cols - 100, params.scale * params.cols - 15, 20, RAYWHITE);
+  }
 }
 
