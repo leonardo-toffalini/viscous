@@ -72,10 +72,17 @@ $
   (partial rho)/(partial t) = kappa Delta rho.
 $
 
+As mentioned before, instead of $partial rho \/ partial t$ we will use the
+forward difference scheme, changing the problem as follows
+$
+  (rho_"next" - rho_"prev")/(Delta t) = kappa Delta rho_"prev" \
+  rho_"next" = rho_"prev" + (Delta t) kappa Delta rho_"prev"
+$
+
 To solve this, we are going to employ the most intuitive method, known as the
 finite difference method, where we think of the density moving outwards from
 each cell to each of it's four neighbors, and density flowing in to it from
-it's neighbors. @fig:5-point-stencil-matrix aids in visualizing the density
+it's neighbors. @fig:5-point-stencil-intuition aids in visualizing the density
 exchange between the neighboring cells.
 
 #align(center)[
@@ -119,7 +126,8 @@ exchange between the neighboring cells.
 In numerical methods for partial differential equations theory this method is
 often called a five point stencil finite difference method.
 
-In a more mathematical sense, what this method does is it approximates the Laplacian $Delta u$ with two second order finite difference schemes, formally
+In a more formal sense, what this method does is it approximates the Laplacian
+$Delta u$ with two second order finite difference schemes, formally
 $
   (Delta_h rho_h)_(i, j) = (rho_(i+1, j) + rho_(i-1, j) + rho_(i, j+1) + rho_(i, j-1) - 4rho_(i,j))/(h^2),
 $
@@ -135,56 +143,54 @@ approaches, however, this will not suffice for us, as all the exact methods are
 too slow for our needs. One can prove sufficient properties of the
 discretization matrix that imply that an iterative method, such as
 Gauss--Seidel will converge rapidly to the exact solution, saving us precious
-time at the cost of exactness. We present an illustration of the $A_h$ discretization matrix in @fig:5-point-stencil-matrix
+time at the cost of exactness. We present an illustration of the $A_h$
+discretization matrix in @fig:5-point-stencil-matrix.
 
 #align(center)[
-
   #figure(
     cetz.canvas({
       import cetz.draw: *
 
-      content((-5.3, 4), anchor: "east", [$n$])
-      content((-4, 5.3), anchor: "south", [$n$])
+      let cell_size = 1.5
+      let grid_size = cell_size * 4
 
-      rect((-5, -5), (5, 5))
-      rect((-5, 5), (-3, 3), name: "topleft")
-      line((-4.95, 4.95), (-3.05, 3.05), stroke: 2pt + green)
-      line((-4.75, 4.95), (-3.05, 3.25), stroke: 2pt + red)
-      line((-4.95, 4.75), (-3.25, 3.05), stroke: 2pt + red)
-      line((-4.95, 2.95), (-3.05, 1.05), stroke: 2pt + orange)
+      content((-grid_size / 2 -0.3, grid_size/2 - cell_size/2), anchor: "east", [$n$])
+      content((-grid_size/2 + cell_size/2, grid_size/2 + 0.3), anchor: "south", [$n$])
 
-      rect((-3, 3), (-1, 1))
-      line((-2.95, 2.95), (-1.05, 1.05), stroke: 2pt + green)
-      line((-2.75, 2.95), (-1.05, 1.25), stroke: 2pt + red)
-      line((-2.95, 2.75), (-1.25, 1.05), stroke: 2pt + red)
-      line((-2.95, 0.95), (-1.05, -0.95), stroke: 2pt + orange)
-      line((-2.95, 4.95), (-1.05, 3.05), stroke: 2pt + orange)
+      rect((-grid_size/2, -grid_size/2), (grid_size/2, grid_size/2))
+      rect((-grid_size/2, grid_size/2), (-grid_size/2 + cell_size, grid_size/2 - cell_size), name: "topleft")
 
-      rect((-1, 1), (1, -1))
-      line((-0.95, 0.95), (0.95, -0.95), stroke: 2pt + green)
-      line((-0.75, 0.95), (0.95, -0.75), stroke: 2pt + red)
-      line((-0.95, 0.75), (0.75, -0.95), stroke: 2pt + red)
-      line((-0.95, 0.95 - 2), (0.95, -0.95 - 2), stroke: 2pt + orange)
-      line((-0.95, 0.95 + 2), (0.95, -0.95 + 2), stroke: 2pt + orange)
+      let tiles = (
+        (-grid_size/2, grid_size/2),
+        (-grid_size/2 + cell_size, grid_size/2 - cell_size),
+        (-grid_size/2 + 2 * cell_size, grid_size/2 - 2 * cell_size),
+        (-grid_size/2 + 3 * cell_size, grid_size/2 - 3 * cell_size),
+      )
 
-      rect((1, -1), (3, -3))
-      line((1.05, -1.05), (2.95, -2.95), stroke: 2pt + green)
-      line((1.25, -1.05), (2.95, -2.75), stroke: 2pt + red)
-      line((1.05, -1.25), (2.75, -2.95), stroke: 2pt + red)
-      line((1.05, -1.05 - 2), (2.95, -2.95 - 2), stroke: 2pt + orange)
-      line((1.05, -1.05 + 2), (2.95, -2.95 + 2), stroke: 2pt + orange)
-
-      rect((3, -3), (5, -5))
-      line((3.05, -3.05), (4.95, -4.95), stroke: 2pt + green)
-      line((3.25, -3.05), (4.95, -4.75), stroke: 2pt + red)
-      line((3.05, -3.25), (4.75, -4.95), stroke: 2pt + red)
-      line((3.05, -3.05 + 2), (4.95, -4.95 + 2), stroke: 2pt + orange)
-
+      for (i, (x, y)) in tiles.enumerate() {
+        if i > 0 {
+          rect((x, y), (x + cell_size, y - cell_size))
+        }
+        
+        line((x + 0.05, y - 0.05), (x + cell_size - 0.05, y - cell_size + 0.05), stroke: 2pt + green)
+        
+        line((x + 0.25, y - 0.05), (x + cell_size - 0.05, y - cell_size + 0.25), stroke: 2pt + red)
+        line((x + 0.05, y - 0.25), (x + cell_size - 0.25, y - cell_size + 0.05), stroke: 2pt + red)
+        
+        if i >= 0 and i <= 2 {
+          line((x + 0.05, y - 0.05 - cell_size), (x + cell_size - 0.05, y - cell_size + 0.05 - cell_size), stroke: 2pt + orange)
+        }
+        
+        if i >= 1 and i <= 3 {
+          line((x + 0.05, y - 0.05 + cell_size), (x + cell_size - 0.05, y - cell_size + 0.05 + cell_size), stroke: 2pt + orange)
+        }
+      }
     }),
 
-    caption: [Five point stencil matrix, where #text(green)[green] $ = 4\/h^2$, #text(red)[red] $=-1\/h^2$, #text(orange)[orange] $=-1\/h^2$]
+    caption: [Five point stencil matrix, where #text(green)[*green*] $ = 4\/h^2$, #text(red)[*red*] $=-1\/h^2$, #text(orange)[*orange*] $=-1\/h^2$]
   )<fig:5-point-stencil-matrix>
 ]
+
 
 Let us denote the Kronecker product of two matrices as $A times.circle B$ and
 let $B = "tridiag"(-1, 2, -1)$. Then, the above discretization matrix of the
@@ -199,28 +205,34 @@ For a more extensive treatment of the subject, the reader is advised to consult
 section 2.2 of @karatsonelliptikus.
 
 == Advection
-
-#text(red)[*TODO*] Make it clear that this is the first crucial idea of the
-method. The idea is that instead of the solving the advection equation as a
-partial differential equation, we trace a path backwards to where a fluid
-particle could have come from.
-
 The problem with solving the advection equation is that it is dependent on the
 velocity vector, in contrast to the diffusion step where it was only dependent
 on the previous state of the density field.
 
+The following novel idea that @stam2003real presents, is to think about the
+fluid particles moving along the velocity field. We must think of our density
+grid as point masses centered at the middle of each cell, then tracing said
+point masses along the velocity field. The problem with said method, is that it
+will be unstable, to remedy this, one often reformulates the method as an
+explicit method to make it stable. This simply means that instead of tracing
+the particles forwards along the velocity field, on must trace back the origin
+of each particle that ended up in the center of a grid cell. @fig:path-trace-back
+provides visual understanding for the backwards path tracing.
+
 After tracing back the possible locations where fluid particles could have come
 from we might get a particle that came from not the exact center of a grid.
 Remember, that we established that we shall think of the fluid as point masses
-centered at the middle of the grid cells. If a particle came from not the dead
+centered at the middle of the grid cells. If a particle came from not the exact
 center then we must somehow give meaning to it too. In this case we will take
 the linear interpolation of the four closes neighbors of where the particle
 came from.
 
-Fluid simulations methods that solve a partial differential equation on a
+Fluid simulation methods that solve a partial differential equation on a
 discretized space are called Lagrangian, whereas methods that simulate fluids
-as a collection of particles are called Eulerian. For this reason this method
-is sometimes called semi-Lagrangian.
+as a collection of interacting particles are called Eulerian. For this reason
+this method is sometimes called a semi-Lagrangian method, because for the
+diffusion step we use a Lagrangian method, but for the advection step we
+temporarily switch to moving particles.
 
 #align(center)[
   #figure(
@@ -263,6 +275,6 @@ is sometimes called semi-Lagrangian.
 
 
     }),
-    caption: [Tracing back the particle path along the velocity field]
+    caption: [Tracing back the particle path along the velocity field.]
   )<fig:path-trace-back>
 ]

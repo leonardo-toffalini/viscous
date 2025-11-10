@@ -53,3 +53,17 @@ $N times N$ grid on the inside.
   )<fig:fluid-in-a-box>
 ]
 
+The equations, which we will be solving in our simulation are all of the form,
+where the time dependent partial derivative of the field is on the left hand
+side. To represent this time derivative of a field we will always keep two
+fields for $rho$ and $bold(u)$, them being $rho_"prev", rho_"next"$ and
+$bold(u)_"prev", bold(u)_"next"$. Then we will approximate the time derivative
+with a simple forward difference scheme as
+$
+  (partial rho)/(partial t)  = (rho_"next" - rho_"prev")/(Delta t),
+$
+where $Delta t$ is the time between the two frames of the simulation, known as
+the delta time. The notation is a bit confusing as we use $Delta$ for the
+Laplacian too, but we believe the reader is conscious enough to see that $t$ is
+a scalar value.
+
