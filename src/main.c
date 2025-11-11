@@ -121,14 +121,16 @@ int main(void) {
     } else if (SELECTED_SCENE == SCENE_VORTEX_SHREDDING) {
       // Left-to-right inflow: v is horizontal component in this codebase
       int band_center = params.N / 2;
-      int band_half = params.N / 4;
+      int band_width = params.N / 16;
       for (int i = 1; i <= params.N; i++) {
         // Uniform inflow across the height; could also restrict to a band
-        v[IX(i, 1)] = params.initial_v_velocity;
+        v[IX(i, 3)] = params.initial_v_velocity;
+        v[IX(i, 4)] = params.initial_v_velocity;
+        v[IX(i, 5)] = params.initial_v_velocity;
       }
       // Seed density near the left boundary in a vertical band for visualization
-      for (int i = band_center - band_half; i <= band_center + band_half; i++) {
-        if (i >= 1 && i <= params.N) dens_prev[IX(i, 2)] = 2.0f;
+      for (int i = band_center - band_width; i <= band_center + band_width; i++) {
+        if (i >= 1 && i <= params.N) dens_prev[IX(i, 4)] = 5.0f;
       }
     } else if (SELECTED_SCENE == SCENE_RAYLEIGH_BENARD_CONVECTION) {
       static float time_accumulator = 0.0f;

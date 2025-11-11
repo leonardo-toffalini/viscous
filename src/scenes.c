@@ -105,11 +105,11 @@ void setup_scene_vortex_shredding(SceneParams *params) {
   setup_scene_default(params);
   // Low viscosity and diffusion to encourage shedding
   params->diff = 1e-5f;
-  params->visc = 1e-6f;
+  params->visc = 1e-8f;
   params->middle_source_value = 0.0f;
   // Use initial_v_velocity as inflow speed (horizontal component in this codebase)
   params->initial_u_velocity = 0.0f;
-  params->initial_v_velocity = 1.0f;
+  params->initial_v_velocity = 0.5f;
 }
 
 void setup_scene(SceneParams *params, SceneType scene_type) {
