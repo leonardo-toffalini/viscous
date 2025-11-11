@@ -26,7 +26,7 @@ $
 $
 
 The $Delta$ operator, called the *Laplace operator*, sometimes written as
-$nabla dot nabla$ or $nabla^2$, acts as follows:
+$nabla dot nabla$ or $nabla^2$, is defined as
 $
   nabla dot nabla u = Delta u = sum_(i=1)^n (partial_i u)^2.
 $

@@ -67,7 +67,7 @@ $rho_h$ is the density field on the discretized domain, and $S_h$ is the matrix
 containing the sources at each grid cell.
 
 == Diffusion
-The diffusion step boils down to solving the simple Poisson equation
+The diffusion step boils down to solving the following simple equation
 $
   (partial rho)/(partial t) = kappa Delta rho.
 $
@@ -103,31 +103,28 @@ exchange between the neighboring cells.
       rect((-1, -3), (1, -1), name: "bottom")
 
       // left <-> middle
-      line((-2, -0.1), (-0.5, -0.1), stroke: semi_red, mark: (end: ">", scale: 0.5))
-      line((-0.5, 0.1), (-2, 0.1), stroke: semi_blue, mark: (end: ">", scale: 0.5))
+      line((-2, -0.1), (-0.5, -0.1), stroke: semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+      line((-0.5, 0.1), (-2, 0.1), stroke: semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
 
       // right <-> middle
-      line((2, -0.1), (0.5, -0.1), stroke: semi_red, mark: (end: ">", scale: 0.5))
-      line((0.5, 0.1), (2, 0.1), stroke: semi_blue, mark: (end: ">", scale: 0.5))
+      line((2, -0.1), (0.5, -0.1), stroke: semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+      line((0.5, 0.1), (2, 0.1), stroke: semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
 
       // top <-> middle
-      line((-0.1, 2), (-0.1, 0.5), stroke: semi_red, mark: (end: ">", scale: 0.5))
-      line((0.1, 0.5), (0.1, 2), stroke: semi_blue, mark: (end: ">", scale: 0.5))
+      line((-0.1, 2), (-0.1, 0.5), stroke: semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+      line((0.1, 0.5), (0.1, 2), stroke: semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
 
       // bottom <-> middle
-      line((-0.1, -2), (-0.1, -0.5), stroke: semi_red, mark: (end: ">", scale: 0.5))
-      line((0.1, -0.5), (0.1, -2), stroke: semi_blue, mark: (end: ">", scale: 0.5))
+      line((-0.1, -2), (-0.1, -0.5), stroke: semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+      line((0.1, -0.5), (0.1, -2), stroke: semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
     }),
 
     caption: [Five point stencil intuition]
   )<fig:5-point-stencil-intuition>
 ]
 
-In numerical methods for partial differential equations theory this method is
-often called a five point stencil finite difference method.
-
 In a more formal sense, what this method does is it approximates the Laplacian
-$Delta u$ with two second order finite difference schemes, formally
+$Delta u$ with two second order finite difference schemes as
 $
   (Delta_h rho_h)_(i, j) = (rho_(i+1, j) + rho_(i-1, j) + rho_(i, j+1) + rho_(i, j-1) - 4rho_(i,j))/(h^2),
 $
@@ -135,8 +132,8 @@ where $h$ is the mesh fineness, that is $h = 1/N$.
 
 The above equations for $i$ and $j$ indices define a linear system of equations
 $A_h rho_h = f_h$, where $A_h$ is the discretization of the Laplacian and $f_h$
-is the right hand side of the original Poisson equation restricted on the
-$h$-fine grid.
+is the left hand side of the original equation restricted on the
+$h$-fine grid ($rho_"next"$).
 
 To solve a linear system of equations one can solve it exactly with various
 approaches, however, this will not suffice for us, as all the exact methods are
@@ -187,15 +184,16 @@ discretization matrix in @fig:5-point-stencil-matrix.
       }
     }),
 
-    caption: [Five point stencil matrix, where #text(green)[*green*] $ = 4\/h^2$, #text(red)[*red*] $=-1\/h^2$, #text(orange)[*orange*] $=-1\/h^2$]
+    caption: [Discretization matrix of the Laplacian, where \
+    #text(green)[*green*] $ = 4\/h^2$, #text(red)[*red*] $=-1\/h^2$,
+    #text(orange)[*orange*] $=-1\/h^2$]
   )<fig:5-point-stencil-matrix>
 ]
 
 
 Let us denote the Kronecker product of two matrices as $A times.circle B$ and
-let $B = "tridiag"(-1, 2, -1)$. Then, the above discretization matrix of the
-five point stencil an be achieved with the following succinct formula: $I
-times.circle B + B times.circle I$.
+let $B = "tridiag"(-1, 2, -1)$. Then, the above matrix can be achieved with the
+following succinct formula: $I times.circle B + B times.circle I$.
 
 However, this matrix is so sparse, that we need not even construct it, as we
 can just solve the resulting linear system of equations with an iterative
@@ -205,16 +203,19 @@ For a more extensive treatment of the subject, the reader is advised to consult
 section 2.2 of @karatsonelliptikus.
 
 == Advection
-The problem with solving the advection equation is that it is dependent on the
-velocity vector, in contrast to the diffusion step where it was only dependent
-on the previous state of the density field.
+For the advection step, we must solve the following equation
+$
+  (partial rho)/(partial t) = - (bold(u) dot nabla) rho.
+$
+The tricky part with solving the advection step is that it is dependent on the
+velocity field, thus one must think of something clever to handle this difficulty.
 
-The following novel idea that @stam2003real presents, is to think about the
+The following novel idea that @stam2003real presents, is to think about 
 fluid particles moving along the velocity field. We must think of our density
 grid as point masses centered at the middle of each cell, then tracing said
 point masses along the velocity field. The problem with said method, is that it
 will be unstable, to remedy this, one often reformulates the method as an
-explicit method to make it stable. This simply means that instead of tracing
+implicit method to make it stable. This simply means that instead of tracing
 the particles forwards along the velocity field, on must trace back the origin
 of each particle that ended up in the center of a grid cell. @fig:path-trace-back
 provides visual understanding for the backwards path tracing.
@@ -224,16 +225,13 @@ from we might get a particle that came from not the exact center of a grid.
 Remember, that we established that we shall think of the fluid as point masses
 centered at the middle of the grid cells. If a particle came from not the exact
 center then we must somehow give meaning to it too. In this case we will take
-the linear interpolation of the four closes neighbors of where the particle
+the linear interpolation of the four closest neighbors of where the particle
 came from.
 
 Fluid simulation methods that solve a partial differential equation on a
-discretized space are called Lagrangian, whereas methods that simulate fluids
-as a collection of interacting particles are called Eulerian. For this reason
-this method is sometimes called a semi-Lagrangian method, because for the
-diffusion step we use a Lagrangian method, but for the advection step we
-temporarily switch to moving particles.
-
+discretized space are called Eulerian, whereas methods that simulate fluids
+as a collection of interacting particles are called Lagrangian. For this reason
+this method is sometimes called a semi-Lagrangian method.
 #align(center)[
   #figure(
     cetz.canvas({

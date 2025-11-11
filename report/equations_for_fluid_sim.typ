@@ -1,10 +1,10 @@
 #import "@preview/cetz:0.4.2"
 
 = Equations for fluid simulation
-It is best to mention here, in this section, that the described method will not
-be exact. This, however, will not be to our detriment, as our aim here is to
-show interesting and realistic visuals as opposed to precise measurements
-useful for engineering efforts.
+It is best to mention here, that the described method will not be exact. This,
+however, will not be to our detriment, as our aim here is to show interesting
+and realistic visuals as opposed to precise measurements useful for engineering
+efforts.
 
 For our purposes we will rearrange @eq:navier-stokes such that we have only the
 time derivate of the velocity on the left and omit the internal force part, as
