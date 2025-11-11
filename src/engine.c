@@ -16,6 +16,9 @@ typedef struct {
   int j;
 } pos;
 
+// When set to 1, the right boundary (j=cols+1) uses zero-gradient outflow for all fields
+int g_outflow_right = 0;
+
 pos mouse_pos_to_index(size_t rows, size_t cols, float scale) {
   int j = GetMouseX() / scale;
   int i = GetMouseY() / scale;
@@ -51,7 +54,12 @@ void add_source(size_t rows, size_t cols, float *x, float *s, float dt) {
 void set_bnd_cpu(int rows, int cols, int b, float *x) {
   for (int i = 1; i <= rows; i++) {
     x[IX(i,      0)] = b == 2 ? -x[IX(i,    1)] :x[IX(i,    1)];
-    x[IX(i, cols+1)] = b == 2 ? -x[IX(i, cols)] :x[IX(i, cols)];
+    if (g_outflow_right) {
+      // Open boundary (outflow) on the right: zero-gradient for all quantities
+      x[IX(i, cols+1)] = x[IX(i, cols)];
+    } else {
+      x[IX(i, cols+1)] = b == 2 ? -x[IX(i, cols)] :x[IX(i, cols)];
+    }
   }
   for (int i = 1; i <= cols; i++) {
     x[IX(0,      i)] = b == 1 ? -x[IX(1,    i)] :x[IX(1,    i)];

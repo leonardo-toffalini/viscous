@@ -109,7 +109,7 @@ void setup_scene_vortex_shredding(SceneParams *params) {
   params->middle_source_value = 0.0f;
   // Use initial_v_velocity as inflow speed (horizontal component in this codebase)
   params->initial_u_velocity = 0.0f;
-  params->initial_v_velocity = 0.5f;
+  params->initial_v_velocity = 0.6f;
 }
 
 void setup_scene(SceneParams *params, SceneType scene_type) {

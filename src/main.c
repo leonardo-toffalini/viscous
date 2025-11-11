@@ -41,6 +41,7 @@
 void keyboard_callback(SceneParams params);
 void click_callback(float *dens_prev, float *u_prev, SceneParams params);
 void drag_callback(SceneParams params, float *u_prev, float *v_prev);
+extern int g_outflow_right;
 
 int first_mouse = 1;
 float last_x = 800.0f / 2;
@@ -58,12 +59,14 @@ int main(void) {
   static unsigned char solid[SIZE_];
 
   zero_all(params.rows, params.cols, dens, dens_prev, u, u_prev, v, v_prev);
+  // Enable right-side outflow for the vortex shedding scene
+  g_outflow_right = (SELECTED_SCENE == SCENE_VORTEX_SHREDDING) ? 1 : 0;
   // Initialize solid mask and place a circular obstacle in the center
   for (int i = 0; i < SIZE_; i++) solid[i] = 0;
   {
     int cx = params.N / 2;
-    int cy = params.N / 2;
-    int r = params.N / 12;
+    int cy = params.N / 3;
+    int r = params.N / 16;
     int r2 = r * r;
     for (int i = 1; i <= params.N; i++) {
       for (int j = 1; j <= params.N; j++) {
@@ -121,16 +124,18 @@ int main(void) {
     } else if (SELECTED_SCENE == SCENE_VORTEX_SHREDDING) {
       // Left-to-right inflow: v is horizontal component in this codebase
       int band_center = params.N / 2;
-      int band_width = params.N / 16;
+      int band_width = params.N / 2;
       for (int i = 1; i <= params.N; i++) {
         // Uniform inflow across the height; could also restrict to a band
+        // v[IX(i, 1)] = params.initial_v_velocity;
+        v[IX(i, 2)] = params.initial_v_velocity;
         v[IX(i, 3)] = params.initial_v_velocity;
         v[IX(i, 4)] = params.initial_v_velocity;
-        v[IX(i, 5)] = params.initial_v_velocity;
+        // v[IX(i, 5)] = params.initial_v_velocity;
       }
       // Seed density near the left boundary in a vertical band for visualization
       for (int i = band_center - band_width; i <= band_center + band_width; i++) {
-        if (i >= 1 && i <= params.N) dens_prev[IX(i, 4)] = 5.0f;
+        if (i >= 1 && i <= params.N - 1 && i % 10 == 0) dens_prev[IX(i, 4)] = 15.0f;
       }
     } else if (SELECTED_SCENE == SCENE_RAYLEIGH_BENARD_CONVECTION) {
       static float time_accumulator = 0.0f;
