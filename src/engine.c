@@ -137,10 +137,15 @@ void diffuse(int N, int b, float *x, float *x0, float diff, float dt) {
   }
 }
 
-void advect_cpu(int N, int b, float *d, float *d0, float *u, float *v, float dt) {
+void advect_cpu(int N, int b, float *d, float *d0, float *u, float *v, float dt, const unsigned char *solid) {
   float dt0 = dt * N;
   for (int i = 1; i <= N; i++) {
     for (int j = 1; j <= N; j++) {
+      // If destination cell is solid, keep it zeroed
+      if (solid && solid[IX(i, j)]) {
+        d[IX(i, j)] = 0.0f;
+        continue;
+      }
       float x = i - dt0 * u[IX(i, j)];
       float y = j - dt0 * v[IX(i, j)];
       if (x < 0.5f)
@@ -161,14 +166,28 @@ void advect_cpu(int N, int b, float *d, float *d0, float *u, float *v, float dt)
       float t1 = y - j0;
       float t0 = 1 - t1;
 
-      d[IX(i, j)] = s0 * (t0 * d0[IX(i0, j0)] + t1 * d0[IX(i0, j1)]) +
-                    s1 * (t0 * d0[IX(i1, j0)] + t1 * d0[IX(i1, j1)]);
+      // Sample from the 4 neighbors, ignoring solid samples (no-through)
+      float w00 = s0 * t0;
+      float w01 = s0 * t1;
+      float w10 = s1 * t0;
+      float w11 = s1 * t1;
+      float v00 = (!solid || !solid[IX(i0, j0)]) ? d0[IX(i0, j0)] : 0.0f;
+      float v01 = (!solid || !solid[IX(i0, j1)]) ? d0[IX(i0, j1)] : 0.0f;
+      float v10 = (!solid || !solid[IX(i1, j0)]) ? d0[IX(i1, j0)] : 0.0f;
+      float v11 = (!solid || !solid[IX(i1, j1)]) ? d0[IX(i1, j1)] : 0.0f;
+      float ws = 0.0f;
+      if (!solid || !solid[IX(i0, j0)]) ws += w00; else w00 = 0.0f;
+      if (!solid || !solid[IX(i0, j1)]) ws += w01; else w01 = 0.0f;
+      if (!solid || !solid[IX(i1, j0)]) ws += w10; else w10 = 0.0f;
+      if (!solid || !solid[IX(i1, j1)]) ws += w11; else w11 = 0.0f;
+      float val = w00 * v00 + w01 * v01 + w10 * v10 + w11 * v11;
+      d[IX(i, j)] = (ws > 0.0f) ? (val / ws) : 0.0f;
     }
   }
   set_bnd(N, N, b, d);
 }
 
-void advect(int N, int b, float *d, float *d0, float *u, float *v, float dt) {
+void advect(int N, int b, float *d, float *d0, float *u, float *v, float dt, const unsigned char *solid) {
   int advect_type = 1 && CUDA_AVAILABLE;
 
   switch (advect_type) {
@@ -182,17 +201,26 @@ void advect(int N, int b, float *d, float *d0, float *u, float *v, float dt) {
     // cpu
     case 0:
     default:
-      advect_cpu(N, b, d, d0, u, v, dt);
+      advect_cpu(N, b, d, d0, u, v, dt, solid);
       break;
   }
 }
 
-void project(int N, float *u, float *v, float *p, float *div) {
+void project(int N, float *u, float *v, float *p, float *div, const unsigned char *solid) {
   float h = 1.0f / N;
   for (int i = 1; i <= N; i++) {
     for (int j = 1; j <= N; j++) {
-      div[IX(i, j)] = -0.5f * h * (u[IX(i+1, j)] - u[IX(i-1, j)] + v[IX(i, j+1)] - v[IX(i, j-1)]);
-      p[IX(i, j)] = 0.0f;
+      if (solid && solid[IX(i, j)]) {
+        div[IX(i, j)] = 0.0f;
+        p[IX(i, j)] = 0.0f;
+      } else {
+        float uR = (solid && solid[IX(i+1, j)]) ? 0.0f : u[IX(i+1, j)];
+        float uL = (solid && solid[IX(i-1, j)]) ? 0.0f : u[IX(i-1, j)];
+        float vU = (solid && solid[IX(i, j+1)]) ? 0.0f : v[IX(i, j+1)];
+        float vD = (solid && solid[IX(i, j-1)]) ? 0.0f : v[IX(i, j-1)];
+        div[IX(i, j)] = -0.5f * h * (uR - uL + vU - vD);
+        p[IX(i, j)] = 0.0f;
+      }
     }
   }
   set_bnd(N, N, 0, div); set_bnd(N, N, 0, p);
@@ -201,7 +229,21 @@ void project(int N, float *u, float *v, float *p, float *div) {
   for (int k = 0; k < ITERATIONS; k++) {
     for (int i = 1; i <= N; i++) {
       for (int j = 1; j <= N; j++) {
-        p[IX(i, j)] = (div[IX(i, j)] + p[IX(i-1, j)] + p[IX(i+1, j)] + p[IX(i, j-1)] + p[IX(i, j+1)]) / 4;
+        if (solid && solid[IX(i, j)]) {
+          p[IX(i, j)] = 0.0f;
+        } else {
+          float sum = 0.0f;
+          int cnt = 0;
+          if (!solid || !solid[IX(i-1, j)]) { sum += p[IX(i-1, j)]; cnt++; }
+          if (!solid || !solid[IX(i+1, j)]) { sum += p[IX(i+1, j)]; cnt++; }
+          if (!solid || !solid[IX(i, j-1)]) { sum += p[IX(i, j-1)]; cnt++; }
+          if (!solid || !solid[IX(i, j+1)]) { sum += p[IX(i, j+1)]; cnt++; }
+          if (cnt > 0) {
+            p[IX(i, j)] = (div[IX(i, j)] + sum) / (float)cnt;
+          } else {
+            p[IX(i, j)] = 0.0f;
+          }
+        }
       }
     }
     set_bnd(N, N, 0, p);
@@ -209,27 +251,48 @@ void project(int N, float *u, float *v, float *p, float *div) {
 
   for (int i = 1; i <= N; i++) {
     for (int j = 1; j <= N; j++) {
-      u[IX(i, j)] -= 0.5f * (p[IX(i+1, j)] - p[IX(i-1, j)]) / h;
-      v[IX(i, j)] -= 0.5f * (p[IX(i, j+1)] - p[IX(i, j-1)]) / h;
+      if (solid && solid[IX(i, j)]) {
+        u[IX(i, j)] = 0.0f;
+        v[IX(i, j)] = 0.0f;
+      } else {
+        float pR = (solid && solid[IX(i+1, j)]) ? p[IX(i, j)] : p[IX(i+1, j)];
+        float pL = (solid && solid[IX(i-1, j)]) ? p[IX(i, j)] : p[IX(i-1, j)];
+        float pU = (solid && solid[IX(i, j+1)]) ? p[IX(i, j)] : p[IX(i, j+1)];
+        float pD = (solid && solid[IX(i, j-1)]) ? p[IX(i, j)] : p[IX(i, j-1)];
+        u[IX(i, j)] -= 0.5f * (pR - pL) / h;
+        v[IX(i, j)] -= 0.5f * (pU - pD) / h;
+      }
     }
   }
   set_bnd(N, N, 1, u); set_bnd(N, N, 2, v);
 }
 
-void dens_step(int N, float *x, float *x0, float *u, float *v, float diff, float dt) {
+void dens_step(int N, float *x, float *x0, float *u, float *v, float diff, float dt, const unsigned char *solid) {
   add_source(N, N, x, x0, dt);
   SWAP(x0, x); diffuse(N, 0, x, x0, diff, dt);
-  SWAP(x0, x); advect(N, 0, x, x0, u, v, dt);
+  SWAP(x0, x); advect(N, 0, x, x0, u, v, dt, solid);
+  // Zero density inside solids
+  if (solid) {
+    for (int i = 1; i <= N; i++)
+      for (int j = 1; j <= N; j++)
+        if (solid[IX(i, j)]) x[IX(i, j)] = 0.0f;
+  }
 }
 
-void vel_step(int N, float *u, float*v, float *u0, float *v0, float visc, float dt) {
+void vel_step(int N, float *u, float*v, float *u0, float *v0, float visc, float dt, const unsigned char *solid) {
   add_source(N, N, u, u0, dt); add_source(N, N, v, v0, dt);
   SWAP(u0, u); diffuse(N, 1, u, u0, visc, dt);
   SWAP(v0, v); diffuse(N, 2, v, v0, visc, dt);
-  project(N, u, v, u0, v0);
+  project(N, u, v, u0, v0, solid);
   SWAP(u0, u); SWAP(v0, v);
-  advect(N, 1, u, u0, u0, v0, dt); advect(N, 2, v, v0, u0, v0, dt);
-  project(N, u, v, u0, v0);
+  advect(N, 1, u, u0, u0, v0, dt, solid); advect(N, 2, v, v0, u0, v0, dt, solid);
+  project(N, u, v, u0, v0, solid);
+  // Zero velocities inside solids
+  if (solid) {
+    for (int i = 1; i <= N; i++)
+      for (int j = 1; j <= N; j++)
+        if (solid[IX(i, j)]) { u[IX(i, j)] = 0.0f; v[IX(i, j)] = 0.0f; }
+  }
 }
 
 void zero_all(int rows, int cols, float *dens, float* dens_prev, float *u, float *u_prev, float *v, float *v_prev) {

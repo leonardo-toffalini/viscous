@@ -8,6 +8,7 @@ typedef enum {
   SCENE_SMOKE = 4,
   SCENE_EMPTY = 5,
   SCENE_RAYLEIGH_BENARD_CONVECTION = 6, // https://en.wikipedia.org/wiki/Rayleigh%E2%80%93B%C3%A9nard_convection
+  SCENE_VORTEX_SHREDDING = 7,
   SCENE_COUNT
 } SceneType;
 
@@ -19,6 +20,7 @@ typedef enum {
     "Smoke",
     "Empty",
     "R-B convection",
+    "Vortex shedding",
   };
 
 typedef struct {
@@ -99,6 +101,17 @@ void setup_scene_empty(SceneParams *params) {
   params->initial_v_velocity = 0.0f;
 }
 
+void setup_scene_vortex_shredding(SceneParams *params) {
+  setup_scene_default(params);
+  // Low viscosity and diffusion to encourage shedding
+  params->diff = 1e-5f;
+  params->visc = 1e-6f;
+  params->middle_source_value = 0.0f;
+  // Use initial_v_velocity as inflow speed (horizontal component in this codebase)
+  params->initial_u_velocity = 0.0f;
+  params->initial_v_velocity = 1.0f;
+}
+
 void setup_scene(SceneParams *params, SceneType scene_type) {
   params->current_scene = scene_type;
   
@@ -123,6 +136,9 @@ void setup_scene(SceneParams *params, SceneType scene_type) {
       break;
     case SCENE_RAYLEIGH_BENARD_CONVECTION:
       setup_scene_empty(params);
+      break;
+    case SCENE_VORTEX_SHREDDING:
+      setup_scene_vortex_shredding(params);
       break;
     default:
       setup_scene_default(params);

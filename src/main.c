@@ -30,7 +30,7 @@
 #define CUDA_AVAILABLE 0
 
 // Scene selection - change this to switch scenes
-#define SELECTED_SCENE SCENE_SMOKE
+#define SELECTED_SCENE SCENE_VORTEX_SHREDDING
 
 // contains all the logic for the simulation
 #include "engine.c"
@@ -55,8 +55,24 @@ int main(void) {
 
   static float u[SIZE_], v[SIZE_], u_prev[SIZE_], v_prev[SIZE_];
   static float dens[SIZE_], dens_prev[SIZE_];
+  static unsigned char solid[SIZE_];
 
   zero_all(params.rows, params.cols, dens, dens_prev, u, u_prev, v, v_prev);
+  // Initialize solid mask and place a circular obstacle in the center
+  for (int i = 0; i < SIZE_; i++) solid[i] = 0;
+  {
+    int cx = params.N / 2;
+    int cy = params.N / 2;
+    int r = params.N / 12;
+    int r2 = r * r;
+    for (int i = 1; i <= params.N; i++) {
+      for (int j = 1; j <= params.N; j++) {
+        int di = i - cx;
+        int dj = j - cy;
+        if (di*di + dj*dj <= r2) solid[IX(i, j)] = 1;
+      }
+    }
+  }
 
   float dt;
 
@@ -102,6 +118,18 @@ int main(void) {
       u[IX(center, center+1)] = params.initial_u_velocity * 0.8f;
       v[IX(center-1, center)] = horizontal_variation * 0.5f;
       v[IX(center+1, center)] = horizontal_variation * 0.5f;
+    } else if (SELECTED_SCENE == SCENE_VORTEX_SHREDDING) {
+      // Left-to-right inflow: v is horizontal component in this codebase
+      int band_center = params.N / 2;
+      int band_half = params.N / 4;
+      for (int i = 1; i <= params.N; i++) {
+        // Uniform inflow across the height; could also restrict to a band
+        v[IX(i, 1)] = params.initial_v_velocity;
+      }
+      // Seed density near the left boundary in a vertical band for visualization
+      for (int i = band_center - band_half; i <= band_center + band_half; i++) {
+        if (i >= 1 && i <= params.N) dens_prev[IX(i, 2)] = 2.0f;
+      }
     } else if (SELECTED_SCENE == SCENE_RAYLEIGH_BENARD_CONVECTION) {
       static float time_accumulator = 0.0f;
       time_accumulator += dt;
@@ -122,8 +150,8 @@ int main(void) {
     }
     click_callback(dens_prev, u_prev, params);
 
-    vel_step(params.N, u, v, u_prev, v_prev, params.visc, dt);
-    dens_step(params.N, dens, dens_prev, u, v, params.diff, dt);
+    vel_step(params.N, u, v, u_prev, v_prev, params.visc, dt, solid);
+    dens_step(params.N, dens, dens_prev, u, v, params.diff, dt, solid);
 
     UpdateTexture(texture, dens);
 
