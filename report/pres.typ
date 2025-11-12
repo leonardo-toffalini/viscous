@@ -4,6 +4,8 @@
 #import "@preview/fletcher:0.5.5" as fletcher: node, edge
 #import "@preview/numbly:0.1.0": numbly
 #import "@preview/theorion:0.3.2": *
+#import "@preview/intextual:0.1.0": flushr, intertext-rule
+#show: intertext-rule
 #import cosmos.clouds: *
 #show: show-theorion
 
@@ -30,50 +32,65 @@
 
 == Outline <touying:hidden>
 
-#components.adaptive-columns(outline(title: none, indent: 1em))
+#components.adaptive-columns(outline(title: none, depth: 1))
 
 = Notaion
 == Differential operators
 $
-  nabla = (partial_1 u, partial_2 u, dots, partial_n u)
+  nabla = (partial_1 u, partial_2 u, dots, partial_n u) #flushr([(Nabla operator)])
 $
+
+#pause
 
 $
   u dot nabla = sum_(i=1)^n u_i partial_i
 $
 
+#pause
+
 $
   (u dot nabla)u = sum_(i=1)^n u_i partial_i u.
 $
 
-*Laplacian*
+#pause
+
 $
-  nabla dot nabla u = Delta u = sum_(i=1)^n (partial_i u)^2.
+  nabla dot nabla u = Delta u = sum_(i=1)^n (partial_i u)^2 #flushr([(Laplace operator)])
 $
 
 = Equations of fluids
 == Navier--Stokes equations
 $
   (partial bold(u))/(partial t) + (bold(u) dot nabla) bold(u) = nu Delta
-bold(u) - 1/rho nabla p + 1/rho bold(f),
+bold(u) - 1/rho nabla p + 1/rho bold(f)
 $
+#pause
 
 - $bold(u)$ is the velocity vector field.
+#pause
 - $bold(f)$ is the external forces.
+#pause
 - $rho$ is the scalar density field.
+#pause
 - $p$ is the pressure field.
+#pause
 - $nu$ is the kinematic viscosity.
 
 ---
+
 $
   (partial bold(u))/(partial t) + overbrace((bold(u) dot nabla) bold(u),
   "Advection") = underbrace(nu Delta bold(u), "Diffusion") overbrace(- 1/rho
    nabla p, "Internal source") + underbrace(1/rho bold(f), "External source").
 $
 
+#pause
 1. Advection -- How the velocity moves.
+#pause
 2. Diffusion -- How the velocity spreads out.
+#pause
 3. Internal source -- How the velocity points towards parts of lesser pressure.
+#pause
 4. External source -- How the velocity is changed subject to external
    intervention, like a fan blowing air.
 
@@ -81,16 +98,18 @@ $
 == Navier--Stokes equations 2
 $
   (partial bold(u))/(partial t) = - (bold(u) dot nabla)bold(u) + nu Delta
-bold(u) + 1/rho bold(f).
+bold(u) + 1/rho bold(f)
 $
 
 $
-  (partial rho)/(partial t) = -(bold(u) dot nabla)rho + kappa Delta rho + S,
+  (partial rho)/(partial t) = -(bold(u) dot nabla)rho + kappa Delta rho + S
 $
+
+#pause
 
 $
   u|_(partial Omega) &= 0 \
-  rho|_(partial Omega) &= 0,
+  rho|_(partial Omega) &= 0
 $
 
 = Simulating fluids
@@ -131,7 +150,7 @@ $
 #align(center + horizon)[
   #let semi_gray = gray.transparentize(50%)
 
-  #cetz.canvas({
+  #cetz-canvas({
     import cetz.draw: *
 
     scale(x: 170%, y: 170%)
@@ -140,10 +159,18 @@ $
 
     // initial density
     rect((-6.5, 0), (-5.5, 1), fill: gray, stroke: 0pt)
+    grid((-7.5, -1), (-4.5, 2), step: 0.5, stroke: 0.6pt)
+    content((-6, 2.05), text(size: 16pt)[Initial density], anchor: "south")
+
+    (pause,)
 
     // add source
     rect((-2.5, 0), (-1.5, 1), fill: gray, stroke: 0pt)
     rect((-1.5, 1), (-0.5, 1.5), fill: gray, stroke: 0pt)
+    grid((-3.5, -1), (-0.5, 2), step: 0.5, stroke: 0.6pt)
+    content((-2, 2.1),  text(size: 16pt)[Add sources], anchor: "south")
+
+    (pause,)
 
     // diffusion
     rect((1.5, 0), (2.5, 1), fill: gray, stroke: 0pt)
@@ -152,6 +179,10 @@ $
     rect((2.5, 1), (3.5, 1.5), fill: gray, stroke: 0pt)
     rect((2.5, 0.5), (3.5, 2), fill: semi_gray, stroke: 0pt)
     rect((2, 1), (2.5, 1.5), fill: semi_gray, stroke: 0pt)
+    grid((3.5, -1), (0.5, 2),   step: 0.5, stroke: 0.6pt)
+    content((2, 2.1),   text(size: 16pt)[Diffusion], anchor: "south")
+
+    (pause,)
 
     // advection
     rect((5.5, -0.5), (6.5, 0.5), fill: gray, stroke: 0pt)
@@ -160,26 +191,20 @@ $
     rect((6.5, 0.5), (7.5, 1), fill: gray, stroke: 0pt)
     rect((6.5, 0), (7.5, 1.5), fill: semi_gray, stroke: 0pt)
     rect((6, 0.5), (6.5, 1), fill: semi_gray, stroke: 0pt)
+    grid((7.5, -1), (4.5, 2),   step: 0.5, stroke: 0.6pt)
+    content((6, 2.1),   text(size: 16pt)[Advection], anchor: "south")
+
+    (pause,)
 
     // velocity vectors
     line((6.75, 0.75), (6.75, 0.25), stroke: 1.5pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
     line((5.25, 0.75), (5.25, 0.25), stroke: 1.5pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
-
-    // left to right
-    grid((-7.5, -1), (-4.5, 2), step: 0.5, stroke: 0.6pt)
-    grid((-3.5, -1), (-0.5, 2), step: 0.5, stroke: 0.6pt)
-    grid((3.5, -1), (0.5, 2),   step: 0.5, stroke: 0.6pt)
-    grid((7.5, -1), (4.5, 2),   step: 0.5, stroke: 0.6pt)
-
-    content((-6, 2.05), text(size: 16pt)[Initial density], anchor: "south")
-    content((-2, 2.1),  text(size: 16pt)[Add sources], anchor: "south")
-    content((2, 2.1),   text(size: 16pt)[Diffusion], anchor: "south")
-    content((6, 2.1),   text(size: 16pt)[Advection], anchor: "south")
   })
 ]
 
 
-== Diffusion
+= Diffusion
+== Diffusion equation
 $
   (partial rho)/(partial t) = kappa Delta rho.
 $
@@ -193,44 +218,48 @@ $
 #align(center + horizon)[
   #let semi_gray = gray.transparentize(50%)
 
-  #cetz.canvas({
-      import cetz.draw: *
+  #cetz-canvas({
+    import cetz.draw: *
 
-      scale(x: 200%, y: 200%)
+    scale(x: 200%, y: 200%)
 
-      let semi_red = red.transparentize(40%)
-      let semi_blue = blue.transparentize(40%)
+    let semi_red = red.transparentize(40%)
+    let semi_blue = blue.transparentize(40%)
 
-      rect((-1, -1), (1, 1),  stroke: 1.5pt, name: "middle")
-      rect((-3, -1), (-1, 1), stroke: 1.5pt, name: "left")
-      rect((1, -1), (3, 1),   stroke: 1.5pt, name: "right")
-      rect((-1, 1), (1, 3),   stroke: 1.5pt, name: "top")
-      rect((-1, -3), (1, -1), stroke: 1.5pt, name: "bottom")
+    rect((-1, -1), (1, 1),  stroke: 1.5pt, name: "middle")
+    rect((-3, -1), (-1, 1), stroke: 1.5pt, name: "left")
+    rect((1, -1), (3, 1),   stroke: 1.5pt, name: "right")
+    rect((-1, 1), (1, 3),   stroke: 1.5pt, name: "top")
+    rect((-1, -3), (1, -1), stroke: 1.5pt, name: "bottom")
 
-      // left <-> middle
-      line((-2, -0.1), (-0.5, -0.1), stroke: 2pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
-      line((-0.5, 0.1), (-2, 0.1), stroke: 2pt + semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
+    (pause,)
 
-      // right <-> middle
-      line((2, -0.1), (0.5, -0.1), stroke: 2pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
-      line((0.5, 0.1), (2, 0.1), stroke: 2pt + semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
+    line((0.1, -0.5), (0.1, -2), stroke: 2pt + semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
+    line((0.1, 0.5), (0.1, 2), stroke: 2pt + semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
+    line((0.5, 0.1), (2, 0.1), stroke: 2pt + semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
+    line((-0.5, 0.1), (-2, 0.1), stroke: 2pt + semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
 
-      // top <-> middle
-      line((-0.1, 2), (-0.1, 0.5), stroke: 2pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
-      line((0.1, 0.5), (0.1, 2), stroke: 2pt + semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
+    (pause,)
 
-      // bottom <-> middle
-      line((-0.1, -2), (-0.1, -0.5), stroke: 2pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
-      line((0.1, -0.5), (0.1, -2), stroke: 2pt + semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
-    })
+    line((-2, -0.1), (-0.5, -0.1), stroke: 2pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+    line((2, -0.1), (0.5, -0.1), stroke: 2pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+    line((-0.1, 2), (-0.1, 0.5), stroke: 2pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+    line((-0.1, -2), (-0.1, -0.5), stroke: 2pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+  })
 ]
 
 == Finite difference method
-#align(horizon)[
-  $
-    (Delta_h rho_h)_(i, j) = (rho_(i+1, j) + rho_(i-1, j) + rho_(i, j+1) + rho_(i, j-1) - 4rho_(i,j))/(h^2),
-  $
-]
+$
+  partial_1^2 rho approx (u_(i+1, j) - 2 u_(i, j) + u_(i-1, j))/h^2
+$
+
+$
+  partial_2^2 rho approx (u_(i, j+1) - 2 u_(i, j) + u_(i, j-1))/h^2
+$
+
+$
+  (Delta_h rho_h)_(i, j) = (rho_(i+1, j) + rho_(i-1, j) + rho_(i, j+1) + rho_(i, j-1) - 4rho_(i,j))/(h^2)
+$
 
 == FDM matrix
 #align(center)[
@@ -275,18 +304,38 @@ $
     }
   })
 
+  #pause
+
   #text(green)[green] $ = 4\/h^2$, #text(red)[red] $=-1\/h^2$,
   #text(orange)[orange] $=-1\/h^2$
 ]
 
-== Advection
+= Advection
+== Advection equation
 $
   (partial rho)/(partial t) = - (bold(u) dot nabla) rho.
 $
 
+#pause
+
+#align(center)[
+  #cetz.canvas({
+    import cetz.draw: *
+    let step = 1
+    let start = -3
+    let values = range(0, int(2 * calc.abs(start) / step)).map(x => start + x * step)
+    grid((start, start), (-start, -start), step: step)
+    for i in values {
+      for j in values {
+        circle((i + step / 2, j + step / 2), radius: 2pt, fill: black)
+      }
+    }
+  })
+]
+
 == Semi-Lagrange
 #align(center + horizon)[
-  #cetz.canvas({
+  #cetz-canvas({
     import cetz.draw: *
 
     scale(x: 150%, y: 150%)
@@ -296,6 +345,8 @@ $
     let values = range(0, int(2 * calc.abs(start) / step)).map(x => start + x * step)
     grid((start, start), (-start, -start), step: step)
 
+    (pause,)
+
     for i in values {
       for j in values {
         let y = i + step/2
@@ -303,25 +354,27 @@ $
         let u = y/4
         let v = -x/4
         line((x, y), (x + u, y + v),
-          stroke: gray + 0.4pt,
+          stroke: gray + 0.8pt,
           mark: (end: ">", scale: 0.6))
       }
     }
+
+    (pause,)
 
     let (a1, b1, c1) = ((-0.5, 2.5), (-1.7, 1.8), (-1.3, 2.6))
     let (a2, b2, c2) = ((-0.5, 1.5), (-1.4, 0.9), (-1.1, 1.6))
     let (a3, b3, c3) = ((-1.5, 1.5), (-2.1, 0.5), (-1.95, 1.3))
 
     bezier(a1, b1, c1,
-      stroke: black + 1.5pt,
+      stroke: black + 2.5pt,
       mark: (start: "o", end: ">", scale: 0.6)
     )
     bezier(a2, b2, c2,
-      stroke: black + 1.5pt,
+      stroke: black + 2.5pt,
       mark: (start: "o", end: ">", scale: 0.6)
     )
     bezier(a3, b3, c3,
-      stroke: black + 1.5pt,
+      stroke: black + 2.5pt,
       mark: (start: "o", end: ">", scale: 0.6)
     )
   })
@@ -330,7 +383,7 @@ $
 = Evolving velocites
 == Helmholtz--Hodge decomposition
 #align(center + horizon)[
-  #cetz.canvas({
+  #cetz-canvas({
     import cetz.draw: *
 
     scale(x: 170%, y: 170%)
@@ -377,16 +430,18 @@ $
     }
 
     let size = 4
+
+    content((-6, 2.1), text(size: 16pt)[combined field], anchor: "south")
     quiver(-8, -2, size, step, comb_u, comb_v)
+    content((-3, 0), text(size: 28pt)[$=$])
+    (pause,)
+
     quiver(-2, -2, size, step, rot_u, rot_v)
     quiver(4, -2, size, step, div_u_vis, div_v_vis)
 
-    content((-6, 2.1), text(size: 16pt)[combined field], anchor: "south")
     content((0, 2.1),  text(size: 16pt)[rotation field], anchor: "south")
     content((6, 2.02), text(size: 16pt)[divergence field], anchor: "south")
-    content((-3, 0), text(size: 16pt)[$=$])
-    content((3, 0), text(size: 16pt)[$+$])
-
+    content((3, 0), text(size: 28pt)[$+$])
   })
 ]
 
