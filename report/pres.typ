@@ -100,20 +100,20 @@ $
     import cetz.draw: *
 
     let side = 5
-    let cell = 0.5
+    let cell = 1
 
     rect((-side, -side), (-side + cell, side), fill: gray, stroke: 0pt)
     rect((side, -side), (side - cell, side), fill: gray, stroke: 0pt)
     rect((-side, side), (side, side - cell), fill: gray, stroke: 0pt)
     rect((-side, -side), (side, -side + cell), fill: gray, stroke: 0pt)
 
-    grid((-side, -side), (side, side), step: 0.5, stroke: 0.3pt)
+    grid((-side, -side), (side, side), step: cell, stroke: 0.4pt)
     line((-side + cell, -side + cell), (-side + cell, side - cell))
     line((side - cell, side - cell), (-side + cell, side - cell))
     line((side - cell, side - cell), (side - cell, -side + cell))
     line((-side + cell, -side + cell), (side - cell, -side + cell))
 
-    for (x, cnt) in ((0, $0$), (1, $1$), (2, $2$)) {
+    for (x, cnt) in ((0, $0$), (2 * cell, $1$), (4 * cell, $2$)) {
       content((-side + cell/2 + x/2, -side - 0.1), text(size: 16pt)[#cnt], anchor: "north")
       content((-side - 0.1, -side + cell/2 + x/2), text(size: 16pt)[#cnt], anchor: "east")
     }
@@ -128,58 +128,53 @@ $
 ]
 
 == Moving densities
-#align()[
+#align(center + horizon)[
   #let semi_gray = gray.transparentize(50%)
 
-  #let c = cetz.canvas({
-      import cetz.draw: *
+  #cetz.canvas({
+    import cetz.draw: *
 
-      // initial density
-      rect((-6.5, 0), (-5.5, 1), fill: gray, stroke: 0pt)
+    scale(x: 170%, y: 170%)
 
-      // add source
-      rect((-2.5, 0), (-1.5, 1), fill: gray, stroke: 0pt)
-      rect((-1.5, 1), (-0.5, 1.5), fill: gray, stroke: 0pt)
+    let semi_red = red.transparentize(30%)
 
-      // diffusion
-      rect((1.5, 0), (2.5, 1), fill: gray, stroke: 0pt)
-      rect((1.0, 0), (3, 1), fill: semi_gray, stroke: 0pt)
-      rect((1.5, -0.5), (2.5, 1.5), fill: semi_gray, stroke: 0pt)
-      rect((2.5, 1), (3.5, 1.5), fill: gray, stroke: 0pt)
-      rect((2.5, 0.5), (3.5, 2), fill: semi_gray, stroke: 0pt)
-      rect((2, 1), (2.5, 1.5), fill: semi_gray, stroke: 0pt)
+    // initial density
+    rect((-6.5, 0), (-5.5, 1), fill: gray, stroke: 0pt)
 
-      // advection
-      rect((5.5, -0.5), (6.5, 0.5), fill: gray, stroke: 0pt)
-      rect((5.0, -0.5), (7, 0.5), fill: semi_gray, stroke: 0pt)
-      rect((5.5, -1), (6.5, 1), fill: semi_gray, stroke: 0pt)
-      rect((6.5, 0.5), (7.5, 1), fill: gray, stroke: 0pt)
-      rect((6.5, 0), (7.5, 1.5), fill: semi_gray, stroke: 0pt)
-      rect((6, 0.5), (6.5, 1), fill: semi_gray, stroke: 0pt)
+    // add source
+    rect((-2.5, 0), (-1.5, 1), fill: gray, stroke: 0pt)
+    rect((-1.5, 1), (-0.5, 1.5), fill: gray, stroke: 0pt)
 
-      // velocity vectors
-      line((6.75, 0.75), (6.75, 0.25), stroke: red.transparentize(50%), mark: (end: ">", scale: 0.5))
-      line((5.25, 0.75), (5.25, 0.25), stroke: red.transparentize(50%), mark: (end: ">", scale: 0.5))
+    // diffusion
+    rect((1.5, 0), (2.5, 1), fill: gray, stroke: 0pt)
+    rect((1.0, 0), (3, 1), fill: semi_gray, stroke: 0pt)
+    rect((1.5, -0.5), (2.5, 1.5), fill: semi_gray, stroke: 0pt)
+    rect((2.5, 1), (3.5, 1.5), fill: gray, stroke: 0pt)
+    rect((2.5, 0.5), (3.5, 2), fill: semi_gray, stroke: 0pt)
+    rect((2, 1), (2.5, 1.5), fill: semi_gray, stroke: 0pt)
 
-      // left to right
-      grid((-7.5, -1), (-4.5, 2), step: 0.5, stroke: 0.3pt)
-      grid((-3.5, -1), (-0.5, 2), step: 0.5, stroke: 0.3pt)
-      grid((3.5, -1), (0.5, 2), step: 0.5, stroke: 0.3pt)
-      grid((7.5, -1), (4.5, 2), step: 0.5, stroke: 0.3pt)
+    // advection
+    rect((5.5, -0.5), (6.5, 0.5), fill: gray, stroke: 0pt)
+    rect((5.0, -0.5), (7, 0.5), fill: semi_gray, stroke: 0pt)
+    rect((5.5, -1), (6.5, 1), fill: semi_gray, stroke: 0pt)
+    rect((6.5, 0.5), (7.5, 1), fill: gray, stroke: 0pt)
+    rect((6.5, 0), (7.5, 1.5), fill: semi_gray, stroke: 0pt)
+    rect((6, 0.5), (6.5, 1), fill: semi_gray, stroke: 0pt)
 
-      content((-6, 2.05), text(size: 16pt)[Initial density], anchor: "south")
-      content((-2, 2.1),  text(size: 16pt)[Add sources], anchor: "south")
-      content((2, 2.1),   text(size: 16pt)[Diffusion], anchor: "south")
-      content((6, 2.1),   text(size: 16pt)[Advection], anchor: "south")
+    // velocity vectors
+    line((6.75, 0.75), (6.75, 0.25), stroke: 1.5pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+    line((5.25, 0.75), (5.25, 0.25), stroke: 1.5pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
 
-      // for vertical alignment
-      circle((0, 4), radius: 1pt, stroke: 0pt)
-    })
+    // left to right
+    grid((-7.5, -1), (-4.5, 2), step: 0.5, stroke: 0.6pt)
+    grid((-3.5, -1), (-0.5, 2), step: 0.5, stroke: 0.6pt)
+    grid((3.5, -1), (0.5, 2),   step: 0.5, stroke: 0.6pt)
+    grid((7.5, -1), (4.5, 2),   step: 0.5, stroke: 0.6pt)
 
-  #place(
-    context {
-    let (width, height) = measure(c)
-    scale(10cm / width * 250%, place(c))
+    content((-6, 2.05), text(size: 16pt)[Initial density], anchor: "south")
+    content((-2, 2.1),  text(size: 16pt)[Add sources], anchor: "south")
+    content((2, 2.1),   text(size: 16pt)[Diffusion], anchor: "south")
+    content((6, 2.1),   text(size: 16pt)[Advection], anchor: "south")
   })
 ]
 
@@ -194,223 +189,301 @@ $
   rho_"next" = rho_"prev" + (Delta t) kappa Delta rho_"prev"
 $
 
-== Five point stencil
-#align()[
+== Duffusion
+#align(center + horizon)[
   #let semi_gray = gray.transparentize(50%)
 
-  #let c = cetz.canvas({
+  #cetz.canvas({
       import cetz.draw: *
+
+      scale(x: 200%, y: 200%)
 
       let semi_red = red.transparentize(40%)
       let semi_blue = blue.transparentize(40%)
 
-      rect((-1, -1), (1, 1), name: "middle")
-      rect((-3, -1), (-1, 1), name: "left")
-      rect((1, -1), (3, 1), name: "right")
-      rect((-1, 1), (1, 3), name: "top")
-      rect((-1, -3), (1, -1), name: "bottom")
+      rect((-1, -1), (1, 1),  stroke: 1.5pt, name: "middle")
+      rect((-3, -1), (-1, 1), stroke: 1.5pt, name: "left")
+      rect((1, -1), (3, 1),   stroke: 1.5pt, name: "right")
+      rect((-1, 1), (1, 3),   stroke: 1.5pt, name: "top")
+      rect((-1, -3), (1, -1), stroke: 1.5pt, name: "bottom")
 
       // left <-> middle
-      line((-2, -0.1), (-0.5, -0.1), stroke: semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
-      line((-0.5, 0.1), (-2, 0.1), stroke: semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
+      line((-2, -0.1), (-0.5, -0.1), stroke: 2pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+      line((-0.5, 0.1), (-2, 0.1), stroke: 2pt + semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
 
       // right <-> middle
-      line((2, -0.1), (0.5, -0.1), stroke: semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
-      line((0.5, 0.1), (2, 0.1), stroke: semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
+      line((2, -0.1), (0.5, -0.1), stroke: 2pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+      line((0.5, 0.1), (2, 0.1), stroke: 2pt + semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
 
       // top <-> middle
-      line((-0.1, 2), (-0.1, 0.5), stroke: semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
-      line((0.1, 0.5), (0.1, 2), stroke: semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
+      line((-0.1, 2), (-0.1, 0.5), stroke: 2pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+      line((0.1, 0.5), (0.1, 2), stroke: 2pt + semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
 
       // bottom <-> middle
-      line((-0.1, -2), (-0.1, -0.5), stroke: semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
-      line((0.1, -0.5), (0.1, -2), stroke: semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
-
-      // for alignment
-      circle((0,0), radius: 1pt)
+      line((-0.1, -2), (-0.1, -0.5), stroke: 2pt + semi_red, mark: (end: ">", scale: 0.5, fill: semi_red))
+      line((0.1, -0.5), (0.1, -2), stroke: 2pt + semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
     })
+]
 
-  #place(
-    center,
-    context {
-    let (width, height) = measure(c)
-    scale(10cm / width * 120%, origin: center + horizon, place(c))
+== Finite difference method
+#align(horizon)[
+  $
+    (Delta_h rho_h)_(i, j) = (rho_(i+1, j) + rho_(i-1, j) + rho_(i, j+1) + rho_(i, j-1) - 4rho_(i,j))/(h^2),
+  $
+]
+
+== FDM matrix
+#align(center)[
+  #cetz.canvas({
+    import cetz.draw: *
+
+    scale(x: 150%, y: 150%)
+
+    let cell_size = 1.5
+    let grid_size = cell_size * 4
+
+    content((-grid_size / 2 -0.3, grid_size/2 - cell_size/2), anchor: "east", [$n$])
+    content((-grid_size/2 + cell_size/2, grid_size/2 + 0.3), anchor: "south", [$n$])
+
+    rect((-grid_size/2, -grid_size/2), (grid_size/2, grid_size/2))
+    rect((-grid_size/2, grid_size/2), (-grid_size/2 + cell_size, grid_size/2 - cell_size), name: "topleft")
+
+    let tiles = (
+      (-grid_size/2, grid_size/2),
+      (-grid_size/2 + cell_size, grid_size/2 - cell_size),
+      (-grid_size/2 + 2 * cell_size, grid_size/2 - 2 * cell_size),
+      (-grid_size/2 + 3 * cell_size, grid_size/2 - 3 * cell_size),
+    )
+
+    for (i, (x, y)) in tiles.enumerate() {
+      if i > 0 {
+        rect((x, y), (x + cell_size, y - cell_size))
+      }
+      
+      line((x + 0.05, y - 0.05), (x + cell_size - 0.05, y - cell_size + 0.05), stroke: 2pt + green)
+      
+      line((x + 0.25, y - 0.05), (x + cell_size - 0.05, y - cell_size + 0.25), stroke: 2pt + red)
+      line((x + 0.05, y - 0.25), (x + cell_size - 0.25, y - cell_size + 0.05), stroke: 2pt + red)
+      
+      if i >= 0 and i <= 2 {
+        line((x + 0.05, y - 0.05 - cell_size), (x + cell_size - 0.05, y - cell_size + 0.05 - cell_size), stroke: 2pt + orange)
+      }
+      
+      if i >= 1 and i <= 3 {
+        line((x + 0.05, y - 0.05 + cell_size), (x + cell_size - 0.05, y - cell_size + 0.05 + cell_size), stroke: 2pt + orange)
+      }
+    }
   })
 
+  #text(green)[green] $ = 4\/h^2$, #text(red)[red] $=-1\/h^2$,
+  #text(orange)[orange] $=-1\/h^2$
 ]
 
-= Animation
-
-== Simple Animation
-
-We can use `#pause` to #pause display something later.
-
-#pause
-
-Just like this.
-
-#meanwhile
-
-Meanwhile, #pause we can also use `#meanwhile` to #pause display other content synchronously.
-
-#speaker-note[
-  + This is a speaker note.
-  + You won't see it unless you use `config-common(show-notes-on-second-screen: right)`
-]
-
-
-== Complex Animation
-
-At subslide #touying-fn-wrapper((self: none) => str(self.subslide)), we can
-
-use #uncover("2-")[`#uncover` function] for reserving space,
-
-use #only("2-")[`#only` function] for not reserving space,
-
-#alternatives[call `#only` multiple times \u{2717}][use `#alternatives` function #sym.checkmark] for choosing one of the alternatives.
-
-
-== Callback Style Animation
-
-#slide(
-  repeat: 3,
-  self => [
-    #let (uncover, only, alternatives) = utils.methods(self)
-
-    At subslide #self.subslide, we can
-
-    use #uncover("2-")[`#uncover` function] for reserving space,
-
-    use #only("2-")[`#only` function] for not reserving space,
-
-    #alternatives[call `#only` multiple times \u{2717}][use `#alternatives` function #sym.checkmark] for choosing one of the alternatives.
-  ],
-)
-
-
-== Math Equation Animation
-
-Equation with `pause`:
-
+== Advection
 $
-  f(x) &= pause x^2 + 2x + 1 \
-  &= pause (x + 1)^2 \
+  (partial rho)/(partial t) = - (bold(u) dot nabla) rho.
 $
 
-#meanwhile
+== Semi-Lagrange
+#align(center + horizon)[
+  #cetz.canvas({
+    import cetz.draw: *
 
-Here, #pause we have the expression of $f(x)$.
+    scale(x: 150%, y: 150%)
 
-#pause
+    let step = 1
+    let start = -3
+    let values = range(0, int(2 * calc.abs(start) / step)).map(x => start + x * step)
+    grid((start, start), (-start, -start), step: step)
 
-By factorizing, we can obtain this result.
+    for i in values {
+      for j in values {
+        let y = i + step/2
+        let x = j + step/2
+        let u = y/4
+        let v = -x/4
+        line((x, y), (x + u, y + v),
+          stroke: gray + 0.4pt,
+          mark: (end: ">", scale: 0.6))
+      }
+    }
 
+    let (a1, b1, c1) = ((-0.5, 2.5), (-1.7, 1.8), (-1.3, 2.6))
+    let (a2, b2, c2) = ((-0.5, 1.5), (-1.4, 0.9), (-1.1, 1.6))
+    let (a3, b3, c3) = ((-1.5, 1.5), (-2.1, 0.5), (-1.95, 1.3))
 
-== CeTZ Animation
-
-CeTZ Animation in Touying:
-
-#cetz-canvas({
-  import cetz.draw: *
-
-  rect((0, 0), (5, 5))
-
-  (pause,)
-
-  rect((0, 0), (1, 1))
-  rect((1, 1), (2, 2))
-  rect((2, 2), (3, 3))
-
-  (pause,)
-
-  line((0, 0), (2.5, 2.5), name: "line")
-})
-
-
-== Fletcher Animation
-
-Fletcher Animation in Touying:
-
-#fletcher-diagram(
-  node-stroke: .1em,
-  node-fill: gradient.radial(blue.lighten(80%), blue, center: (30%, 20%), radius: 80%),
-  spacing: 4em,
-  edge((-1, 0), "r", "-|>", `open(path)`, label-pos: 0, label-side: center),
-  node((0, 0), `reading`, radius: 2em),
-  edge((0, 0), (0, 0), `read()`, "--|>", bend: 130deg),
-  pause,
-  edge(`read()`, "-|>"),
-  node((1, 0), `eof`, radius: 2em),
-  pause,
-  edge(`close()`, "-|>"),
-  node((2, 0), `closed`, radius: 2em, extrude: (-2.5, 0)),
-  edge((0, 0), (2, 0), `close()`, "-|>", bend: -40deg),
-)
-
-
-= Theorems
-
-== Prime numbers
-
-#definition[
-  A natural number is called a #highlight[_prime number_] if it is greater
-  than 1 and cannot be written as the product of two smaller natural numbers.
-]
-#example[
-  The numbers $2$, $3$, and $17$ are prime.
-  @cor_largest_prime shows that this list is not exhaustive!
+    bezier(a1, b1, c1,
+      stroke: black + 1.5pt,
+      mark: (start: "o", end: ">", scale: 0.6)
+    )
+    bezier(a2, b2, c2,
+      stroke: black + 1.5pt,
+      mark: (start: "o", end: ">", scale: 0.6)
+    )
+    bezier(a3, b3, c3,
+      stroke: black + 1.5pt,
+      mark: (start: "o", end: ">", scale: 0.6)
+    )
+  })
 ]
 
-#theorem(title: "Euclid")[
-  There are infinitely many primes.
-]
-#pagebreak(weak: true)
-#proof[
-  Suppose to the contrary that $p_1, p_2, dots, p_n$ is a finite enumeration
-  of all primes. Set $P = p_1 p_2 dots p_n$. Since $P + 1$ is not in our list,
-  it cannot be prime. Thus, some prime factor $p_j$ divides $P + 1$. Since
-  $p_j$ also divides $P$, it must divide the difference $(P + 1) - P = 1$, a
-  contradiction.
+= Evolving velocites
+== Helmholtz--Hodge decomposition
+#align(center + horizon)[
+  #cetz.canvas({
+    import cetz.draw: *
+
+    scale(x: 170%, y: 170%)
+
+    let step = 0.3
+    let start = -3
+    let field_scale = 0.2
+    let zoom = 0.5
+    let values = range(0, int(2 * calc.abs(start) / step)).map(x => start + x * step)
+
+    let rot_u(x, y, field_scale) = {calc.sin(y + calc.sin(x)) * field_scale}
+    let rot_v(x, y, field_scale) = {-calc.sin(x + calc.sin(y)) * field_scale}
+    let div_u(x, y, field_scale) = {calc.sin(x) * calc.cos(y) * field_scale * 0.6}
+    let div_v(x, y, field_scale) = {calc.cos(x) * calc.sin(y) * field_scale * 0.6}
+    let div_u_vis(x, y, field_scale) = {calc.sin(x) * calc.cos(y) * field_scale * 1.6}
+    let div_v_vis(x, y, field_scale) = {calc.cos(x) * calc.sin(y) * field_scale * 1.6}
+    let comb_u(x, y, field_scale) = {rot_u(x, y, field_scale) + div_u(x, y, field_scale)}
+    let comb_v(x, y, field_scale) = {rot_v(x, y, field_scale) + div_v(x, y, field_scale)}
+
+    let quiver(start_x, start_y, size, step, f_u, f_v) = {
+      let values = range(0, int(size / step)).map(x => -size/2 + x * step)
+      for i in values {
+        for j in values {
+        let cell_y = i + step/2
+        let cell_x = j + step/2
+        let y = cell_y / zoom
+        let x = cell_x / zoom
+        let u = f_u(x, y, field_scale)
+        let v = f_v(x, y, field_scale)
+
+        let pos_x = cell_x + size/2 + start_x
+        let pos_y = cell_y
+
+        // debug circles at the cell middle
+        // circle((pos_x, pos_y), radius: 1.5pt, stroke: red)
+
+        line((pos_x, pos_y), (pos_x + u, pos_y + v),
+          stroke: black + 0.8pt,
+          mark: (end: ">", scale: 0.2))
+
+        }
+      }
+      rect((start_x, start_y), (start_x + size, start_y + size), stroke: 0.2pt)
+    }
+
+    let size = 4
+    quiver(-8, -2, size, step, comb_u, comb_v)
+    quiver(-2, -2, size, step, rot_u, rot_v)
+    quiver(4, -2, size, step, div_u_vis, div_v_vis)
+
+    content((-6, 2.1), text(size: 16pt)[combined field], anchor: "south")
+    content((0, 2.1),  text(size: 16pt)[rotation field], anchor: "south")
+    content((6, 2.02), text(size: 16pt)[divergence field], anchor: "south")
+    content((-3, 0), text(size: 16pt)[$=$])
+    content((3, 0), text(size: 16pt)[$+$])
+
+  })
 ]
 
-#corollary[
-  There is no largest prime number.
-] <cor_largest_prime>
-#corollary[
-  There are infinitely many composite numbers.
-]
+---
+$
+  bold(w) = bold(u) + nabla q,
+$
 
-#theorem[
-  There are arbitrarily long stretches of composite numbers.
-]
+$
+  nabla dot bold(w) &= nabla dot bold(u) + nabla dot nabla q \
+  nabla dot bold(w) &= 0 + nabla dot nabla q \
+  nabla dot bold(w) &= Delta q
+$
 
-#proof[
-  For any $n > 2$, consider $
-    n! + 2, quad n! + 3, quad ..., quad n! + n
+$
+  bold(u) = bold(w) - nabla q.
+$
+
+== Projection
+#align(center + horizon)[
+  #cetz.canvas({
+    import cetz.draw: *
+
+    scale(x: 150%, y: 150%)
+
+    let x_dir = (2, -1)
+    let y_dir = (5, 0)
+    let z_dir = (0, 3)
+
+    let scale = 0.25
+
+    let values = range(-3, 5)
+
+    for i in range(-4, 5) {
+      let start = (-y_dir.at(0), -y_dir.at(1))
+      let end = (y_dir.at(0), y_dir.at(1))
+      let x1 = start.at(0) + x_dir.at(0) * i * scale
+      let y1 = start.at(1) + x_dir.at(1) * i * scale
+      let x2 = end.at(0) + x_dir.at(0) * i * scale
+      let y2 = end.at(1) + x_dir.at(1) * i * scale
+      line((x1, y1), (x2, y2), stroke: 1pt + gray)
+    }
+
+    for i in range(-4, 5) {
+      let start = (-x_dir.at(0), -x_dir.at(1))
+      let end = (x_dir.at(0), x_dir.at(1))
+      let x1 = start.at(0) + y_dir.at(0) * i * scale
+      let y1 = start.at(1) + y_dir.at(1) * i * scale
+      let x2 = end.at(0) + y_dir.at(0) * i * scale
+      let y2 = end.at(1) + y_dir.at(1) * i * scale
+      line((x1, y1), (x2, y2), stroke: 1pt + gray)
+    }
+
+    let points = ((-2.7,-0.5), (-3.2,1.5), (-0.5,2), (2, 1.8), (2, -0.3))
+    let names = ($u_1$, $u_2$, $u_3$, $u_4$, $u_4$)
+
+    for (pt1, pt2) in points.slice(0, points.len() - 1).zip(points.slice(1, points.len())) {
+      line(pt1, pt2, stroke: (dash: "dotted"))
+    }
+
+    line(points.first(), points.last(), stroke: 1.5pt + red, mark: (end: ">", scale: 0.5))
+
+    for (pt, name) in points.zip(names) {
+      content(pt, name, anchor: "north-east")
+      circle(pt, radius: 1.2pt, stroke: black, fill: black)
+    }
+
+
+    line((-y_dir.at(0), -y_dir.at(1)), y_dir, stroke: 2pt, mark: (end: ">", scale: 0.5))
+    line((-x_dir.at(0), -x_dir.at(1)), x_dir, stroke: 2pt, mark: (end: ">", scale: 0.5))
+    line((0,0), z_dir, stroke: 2pt, mark: (end: ">", scale: 0.5))
+
+    content((3.5, -0.5), text(size: 18pt)[$nabla dot u = 0$])
+
+  })
+
+  $
+    u_1 -->^"add source" u_2 -->^"diffusion" u_3 -->^"advection" u_4 -->^"projection" u_5
   $
 ]
 
 
-= Others
-
-== Side-by-side
-
-#slide(composer: (1fr, 1fr))[
-  First column.
-][
-  Second column.
-]
-
-
-== Multiple Pages
-
-#lorem(200)
-
-
-#show: appendix
-
 = Appendix
 
 == Appendix
+#link("https://github.com/leonardo-toffalini/viscous")
 
-Please pay attention to the current slide number.
+---
+
+#figure(
+  image("smoke_screenshot.png", width: 40%),
+  caption: [Smoke emitting from the tip of a cigarette]
+)
+
+---
+
+#figure(
+  image("vortex_shredding.png", width: 42%),
+  caption: [Vortex shredding]
+)
