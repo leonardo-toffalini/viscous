@@ -117,6 +117,6 @@
       content((3.5, -0.5), text(size: 12pt)[$nabla dot u = 0$])
 
     }),
-    caption: [Illustrative steps of the simulation]
+    caption: [Illustrative steps of the simulation.]
   )<fig:proj2>
 ]

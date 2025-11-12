@@ -7,14 +7,9 @@
 #set page(numbering: "1")
 
 #show math.equation.where(block: false): box
+#set figure(gap: 1.5em)
 
-#let exercise-counter = counter("exercise")
-#show: sectioned-counter(exercise-counter, level: 1)
-#let exercise = exercise.with(counter: exercise-counter)
-
-#let solution = proof.with(
-  title: "Solution",
-)
+#let numbered_eq(content) = math.equation(block: true, numbering: "(1)", content)
 
 #let todo(body) = [#text(red)[*TODO*] #body]
 

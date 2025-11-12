@@ -58,7 +58,7 @@
       content((3, 0), text(size: 16pt)[$+$])
 
     }),
-    caption: [Helmholtz--Hodge decomposition]
+    caption: [Helmholtz--Hodge decomposition.]
   )<fig:hodge>
 ]
 
