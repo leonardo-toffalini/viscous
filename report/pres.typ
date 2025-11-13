@@ -210,7 +210,7 @@ $
 $
 
 $
-  (rho_"next" - rho_"prev")/(Delta t) = kappa Delta rho_"prev" \
+  (rho_"next" - rho_"prev")/(Delta t) = kappa Delta rho_"prev" #flushr([(Forward difference)]) \
   rho_"next" = rho_"prev" + (Delta t) kappa Delta rho_"prev"
 $
 
@@ -447,22 +447,27 @@ $
 
 ---
 $
-  bold(w) = bold(u) + nabla q,
+  bold(w) &= bold(u) + nabla q \
+  nabla dot bold(u) = 0&, quad q: RR^n -> RR
 $
+#pause
 
 $
   nabla dot bold(w) &= nabla dot bold(u) + nabla dot nabla q \
+  pause
   nabla dot bold(w) &= 0 + nabla dot nabla q \
-  nabla dot bold(w) &= Delta q
+  pause
+  nabla dot bold(w) &= Delta q #flushr([(Poisson eq.)])
 $
+#pause
 
 $
-  bold(u) = bold(w) - nabla q.
+  bold(u) = bold(w) - nabla q
 $
 
 == Projection
 #align(center + horizon)[
-  #cetz.canvas({
+  #cetz-canvas({
     import cetz.draw: *
 
     scale(x: 150%, y: 150%)
@@ -495,29 +500,33 @@ $
       line((x1, y1), (x2, y2), stroke: 1pt + gray)
     }
 
-    let points = ((-2.7,-0.5), (-3.2,1.5), (-0.5,2), (2, 1.8), (2, -0.3))
-    let names = ($u_1$, $u_2$, $u_3$, $u_4$, $u_4$)
-
-    for (pt1, pt2) in points.slice(0, points.len() - 1).zip(points.slice(1, points.len())) {
-      line(pt1, pt2, stroke: (dash: "dotted"))
-    }
-
-    line(points.first(), points.last(), stroke: 1.5pt + red, mark: (end: ">", scale: 0.5))
-
-    for (pt, name) in points.zip(names) {
-      content(pt, name, anchor: "north-east")
-      circle(pt, radius: 1.2pt, stroke: black, fill: black)
-    }
-
-
     line((-y_dir.at(0), -y_dir.at(1)), y_dir, stroke: 2pt, mark: (end: ">", scale: 0.5))
     line((-x_dir.at(0), -x_dir.at(1)), x_dir, stroke: 2pt, mark: (end: ">", scale: 0.5))
     line((0,0), z_dir, stroke: 2pt, mark: (end: ">", scale: 0.5))
 
-    content((3.5, -0.5), text(size: 18pt)[$nabla dot u = 0$])
+    content((5.5, -0.5), text(size: 24pt)[$nabla dot u = 0$])
+    (pause,)
 
+    let points = ((-2.7,-0.5), (-3.2,1.5), (-0.5,2), (2, 1.8), (2, -0.3))
+    let names = ($u_1$, $u_2$, $u_3$, $u_4$, $u_4$)
+    content(points.at(0), names.at(0), anchor: "north-east")
+    circle(points.at(0), radius: 1.2pt, stroke: black, fill: black)
+
+    for ((pt1, pt2), name) in points.slice(0, points.len() - 1).zip(points.slice(1, points.len())).zip(names) {
+      line(pt1, pt2, stroke: (dash: "dotted"))
+      content(pt2, name, anchor: "north-east")
+      circle(pt2, radius: 1.2pt, stroke: black, fill: black)
+      (pause,)
+    }
+
+    line(points.first(), points.last(), stroke: 1.5pt + red, mark: (end: ">", scale: 0.5))
+
+    line((-y_dir.at(0), -y_dir.at(1)), y_dir, stroke: 2pt, mark: (end: ">", scale: 0.5))
+    line((-x_dir.at(0), -x_dir.at(1)), x_dir, stroke: 2pt, mark: (end: ">", scale: 0.5))
+    line((0,0), z_dir, stroke: 2pt, mark: (end: ">", scale: 0.5))
   })
 
+  #meanwhile
   $
     u_1 -->^"add source" u_2 -->^"diffusion" u_3 -->^"advection" u_4 -->^"projection" u_5
   $
