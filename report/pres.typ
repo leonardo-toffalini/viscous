@@ -37,7 +37,7 @@
 = Notaion
 == Differential operators
 $
-  nabla = (partial_1 u, partial_2 u, dots, partial_n u) #flushr([(Nabla operator)])
+  nabla = (partial_1, partial_2, dots, partial_n) #flushr([(Nabla operator)])
 $
 
 #pause
@@ -97,12 +97,16 @@ $
 = Equations for fluid simulations
 == Navier--Stokes equations 2
 $
-  (partial bold(u))/(partial t) = - (bold(u) dot nabla)bold(u) + nu Delta
-bold(u) + 1/rho bold(f)
+  (partial bold(u))/(partial t) &= - (bold(u) dot nabla)bold(u) + nu Delta
+bold(u) + 1/rho bold(f) \
+  #pause
+  (partial rho)/(partial t) &= -(bold(u) dot nabla)rho + kappa Delta rho + S
 $
 
+#pause
+
 $
-  (partial rho)/(partial t) = -(bold(u) dot nabla)rho + kappa Delta rho + S
+  nabla dot u = 0
 $
 
 #pause
@@ -127,10 +131,7 @@ $
     rect((-side, -side), (side, -side + cell), fill: gray, stroke: 0pt)
 
     grid((-side, -side), (side, side), step: cell, stroke: 0.4pt)
-    line((-side + cell, -side + cell), (-side + cell, side - cell))
-    line((side - cell, side - cell), (-side + cell, side - cell))
-    line((side - cell, side - cell), (side - cell, -side + cell))
-    line((-side + cell, -side + cell), (side - cell, -side + cell))
+    rect((-side + cell, -side + cell), (side - cell, side - cell), stroke: 3pt)
 
     for (x, cnt) in ((0, $0$), (2 * cell, $1$), (4 * cell, $2$)) {
       content((-side + cell/2 + x/2, -side - 0.1), text(size: 16pt)[#cnt], anchor: "north")
@@ -142,7 +143,7 @@ $
     content((-side - 0.2, cell/2),          text(size: 20pt)[$dots.v$], anchor: "east")
 
     content((0, 0), text(size: 32pt)[$Omega$])
-    content((side + 2 * cell, 0), text(size: 24pt)[$partial Omega$])
+    content((side + cell, 0), text(size: 24pt)[$partial Omega$])
   })
 ]
 
@@ -209,9 +210,14 @@ $
   (partial rho)/(partial t) = kappa Delta rho.
 $
 
+#pause
+
 $
   (rho_"next" - rho_"prev")/(Delta t) = kappa Delta rho_"prev" #flushr([(Forward difference)]) \
-  rho_"next" = rho_"prev" + (Delta t) kappa Delta rho_"prev"
+$
+$
+  #pause
+  rho_"next" = rho_"prev" + (Delta t) kappa Delta rho_"prev" #flushr([(Helmholtz eq.)])
 $
 
 == Duffusion
@@ -256,6 +262,8 @@ $
 $
   partial_2^2 rho approx (u_(i, j+1) - 2 u_(i, j) + u_(i, j-1))/h^2
 $
+
+#pause
 
 $
   (Delta_h rho_h)_(i, j) = (rho_(i+1, j) + rho_(i-1, j) + rho_(i, j+1) + rho_(i, j-1) - 4rho_(i,j))/(h^2)
@@ -551,3 +559,5 @@ $
   image("vortex_shredding.png", width: 42%),
   caption: [Vortex shredding]
 )
+
+#bibliography("refs.bib", full: true)
