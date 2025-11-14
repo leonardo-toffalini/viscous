@@ -207,17 +207,17 @@ $
 = Diffusion
 == Diffusion equation
 $
-  (partial rho)/(partial t) = kappa Delta rho.
+  (partial rho)/(partial t) = kappa Delta rho
 $
 
 #pause
 
 $
-  (rho_"next" - rho_"prev")/(Delta t) = kappa Delta rho_"prev" #flushr([(Forward difference)]) \
+  (rho_"next" - rho_"prev")/(Delta t) = kappa Delta rho_"prev" #pause #flushr([(Forward difference)])
 $
 $
   #pause
-  rho_"next" = rho_"prev" + (Delta t) kappa Delta rho_"prev" #flushr([(Helmholtz eq.)])
+  rho_"next" = rho_"prev" + (Delta t) kappa Delta rho_"prev" #pause #flushr([(Helmholtz eq.)])
 $
 
 == Duffusion
@@ -321,7 +321,7 @@ $
 = Advection
 == Advection equation
 $
-  (partial rho)/(partial t) = - (bold(u) dot nabla) rho.
+  (partial rho)/(partial t) = - (bold(u) dot nabla) rho
 $
 
 #pause
@@ -465,7 +465,7 @@ $
   pause
   nabla dot bold(w) &= 0 + nabla dot nabla q \
   pause
-  nabla dot bold(w) &= Delta q #flushr([(Poisson eq.)])
+  nabla dot bold(w) &= Delta q #pause #flushr([(Poisson eq.)])
 $
 #pause
 
@@ -473,7 +473,7 @@ $
   bold(u) = bold(w) - nabla q
 $
 
-== Projection
+== Simulation steps
 #align(center + horizon)[
   #cetz-canvas({
     import cetz.draw: *
@@ -516,9 +516,10 @@ $
     (pause,)
 
     let points = ((-2.7,-0.5), (-3.2,1.5), (-0.5,2), (2, 1.8), (2, -0.3))
-    let names = ($u_1$, $u_2$, $u_3$, $u_4$, $u_4$)
-    content(points.at(0), names.at(0), anchor: "north-east")
+    let names = ($u_2$, $u_3$, $u_4$, $u_5$)
+    content(points.at(0), $u_1$, anchor: "north-east")
     circle(points.at(0), radius: 1.2pt, stroke: black, fill: black)
+    (pause,)
 
     for ((pt1, pt2), name) in points.slice(0, points.len() - 1).zip(points.slice(1, points.len())).zip(names) {
       line(pt1, pt2, stroke: (dash: "dotted"))
@@ -527,11 +528,11 @@ $
       (pause,)
     }
 
-    line(points.first(), points.last(), stroke: 1.5pt + red, mark: (end: ">", scale: 0.5))
-
     line((-y_dir.at(0), -y_dir.at(1)), y_dir, stroke: 2pt, mark: (end: ">", scale: 0.5))
     line((-x_dir.at(0), -x_dir.at(1)), x_dir, stroke: 2pt, mark: (end: ">", scale: 0.5))
     line((0,0), z_dir, stroke: 2pt, mark: (end: ">", scale: 0.5))
+
+    line(points.first(), points.last(), stroke: 1.5pt + red, mark: (end: ">", scale: 0.5))
   })
 
   #meanwhile
