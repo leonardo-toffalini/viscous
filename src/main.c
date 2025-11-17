@@ -73,7 +73,7 @@ int main(void) {
   Texture2D texture = LoadTextureFromImage(img);
 
   // convert red channel only color to something else
-  Shader colorShader = LoadShader(NULL, "src/color_conversion.frag");
+  Shader colorShader = LoadShader(NULL, "src/shaders/hot_cold.frag");
 
 
   SetTargetFPS(MAX_FPS);
