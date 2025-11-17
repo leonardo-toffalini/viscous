@@ -1,5 +1,7 @@
 #import "@preview/cetz:0.4.2"
 
+#let numbered_eq(content) = math.equation(block: true, numbering: "(1)", content)
+
 = Moving densities
 In our simulation, we will solve the parts of the simplified Navier-Stokes
 equations for the density field one by one. Starting with the simplest, adding
@@ -75,8 +77,17 @@ $
 As mentioned before, instead of $partial rho \/ partial t$ we will use the
 forward difference scheme, changing the problem as follows
 $
-  (rho_"next" - rho_"prev")/(Delta t) = kappa Delta rho_"prev" \
-  rho_"next" = rho_"prev" + (Delta t) kappa Delta rho_"prev"
+  (rho_"next" - rho_"prev")/(Delta t) = kappa Delta rho_"prev"
+$
+#numbered_eq(
+  $
+    rho_"next" = rho_"prev" + (Delta t) kappa Delta rho_"prev"
+  $
+)<eq:helmholtz>
+
+The resulting @eq:helmholtz is a Helmholtz equation, of the form
+$
+  Delta u + lambda u = f.
 $
 
 To solve this, we are going to employ the most intuitive method, known as the
@@ -119,7 +130,7 @@ exchange between the neighboring cells.
       line((0.1, -0.5), (0.1, -2), stroke: semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
     }),
 
-    caption: [Five point stencil intuition]
+    caption: [Density exchange]
   )<fig:5-point-stencil-intuition>
 ]
 
@@ -132,8 +143,7 @@ where $h$ is the mesh fineness, that is $h = 1/N$.
 
 The above equations for $i$ and $j$ indices define a linear system of equations
 $A_h rho_h = f_h$, where $A_h$ is the discretization of the Laplacian and $f_h$
-is the left hand side of the original equation restricted on the
-$h$-fine grid ($rho_"next"$).
+is the density field from the previous time step, and $h$ is the fineness of the grid, that is $h = 1/N$.
 
 To solve a linear system of equations one can solve it exactly with various
 approaches, however, this will not suffice for us, as all the exact methods are
@@ -142,6 +152,10 @@ discretization matrix that imply that an iterative method, such as
 Gauss--Seidel will converge rapidly to the exact solution, saving us precious
 time at the cost of exactness. We present an illustration of the $A_h$
 discretization matrix in @fig:5-point-stencil-matrix.
+
+There are many other iterative methods for solving a linear system of equations
+of this kind, of which the multi grid method achieves the theoretically optimal
+complexity, however, this method often ends up being slower for coarser grids. The mothod that is most often used in the most efficient Poisson solvers is the generalized Buneman method, described in @genbun.
 
 #align(center)[
   #figure(
@@ -190,14 +204,17 @@ discretization matrix in @fig:5-point-stencil-matrix.
   )<fig:5-point-stencil-matrix>
 ]
 
-
-Let us denote the Kronecker product of two matrices as $A times.circle B$ and
-let $B = "tridiag"(-1, 2, -1)$. Then, the above matrix can be achieved with the
-following succinct formula: $I times.circle B + B times.circle I$.
+// Let us denote the Kronecker product of two matrices as $A times.circle B$ and
+// let $B = "tridiag"(-1, 2, -1)$. Then, the above matrix can be achieved with the
+// following succinct formula: $I times.circle B + B times.circle I$.
 
 However, this matrix is so sparse, that we need not even construct it, as we
 can just solve the resulting linear system of equations with an iterative
 method without constructing the full matrix.
+
+Note, that the previously described finite difference method was for the
+Poisson equation, however, one can easily adjust it to include the extra term
+in the @eq:helmholtz equation.
 
 For a more extensive treatment of the subject, the reader is advised to consult
 section 2.2 of @karatsonelliptikus.

@@ -14,7 +14,7 @@
 #let todo(body) = [#text(red)[*TODO*] #body]
 
 #align(center)[
-  #text(size: 25pt)[*Technical Report*] \
+  #text(size: 25pt)[*Real time fluid dynamics*] \
 
   Toffalini Leonardo
 ]
@@ -33,9 +33,11 @@
 
 #include "evolving_velocities.typ"
 
+#pagebreak()
+
 #include "appendix.typ"
 
 #pagebreak()
 
-#bibliography("refs.bib")
+#bibliography("refs.bib", full: true)
 
