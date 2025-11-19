@@ -1,24 +1,21 @@
 #import "@preview/cetz:0.4.2"
 
 = Simulating fluids
-The detailed methods are described in @stam2003real and @stam2023stable.
-
 The equations presented in the previous sections hold on the entire
-$n$-dimensional space in which the fluid resides. However, when numerically
-solving a partial differential equation one often discretizes the space into
+$2$ or $3$-dimensional space in which the fluid resides. However, when numerically
+solving a partial differential equation one often discretizes the space into a grid of
 small rectangles and only bothers to calculate the solution on these
 rectangles. For our purposes we will confine ourselves to the $2$-dimensional
-plane, but everything mentioned hereafter can be easily extended to higher
-dimensions.
+plane, but everything mentioned hereafter can be easily extended to the third
+dimension.
 
-We will make another simplification, which is to only consider a rectangular
+We will make another simplification, which is to only consider a square
 domain. This makes the calculations easier to handle as matrix operations,
 however, one is free to extend the domain to more complex shapes by exercising
 proper caution when handling the boundary. @fig:fluid-in-a-box shows a
-schematic diagram of how one must imagine a grid on a rectangular domain.
+schematic diagram of how one must imagine a grid on a square domain.
 Notice, how we introduced a $0$th and an $(N+1)$th row and column to handle
-the boundary, this way it is clear that we will be simulating the fluid on an
-$N times N$ grid on the inside.
+the boundary.
 
 #align(center)[
   #figure(
@@ -31,10 +28,7 @@ $N times N$ grid on the inside.
     rect((-2.5, -2.5), (2.5, -2), fill: gray, stroke: 0pt)
 
     grid((-2.5, -2.5), (2.5, 2.5), step: 0.5, stroke: 0.3pt)
-    line((-2, -2), (-2, 2))
-    line((2, 2), (-2, 2))
-    line((2, 2), (2, -2))
-    line((-2, -2), (2, -2))
+    rect((-2, -2), (2, 2), stroke: 2pt)
 
     for (x, cnt) in ((0, $0$), (1, $1$), (2, $2$)) {
       content((-2.25 + x/2, -2.6), cnt, anchor: "north")
@@ -63,7 +57,6 @@ $
   (partial rho)/(partial t)  = (rho_"next" - rho_"prev")/(Delta t),
 $
 where $Delta t$ is the time between the two frames of the simulation, known as
-the delta time. The notation is a bit confusing as we use $Delta$ for the
-Laplacian too, but we believe the reader is conscious enough to see that $t$ is
-a scalar value.
+the delta time. After each frame of the simulation we will swap the *prev*
+and *next* fields for $rho$ and $bold(u)$.
 

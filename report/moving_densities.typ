@@ -63,13 +63,13 @@ simulation is running.
 
 == Adding sources
 Possibly the simplest step of the simulation is to add new sources to the
-density field, or to the velocity field for that matter. For a rectangular grid
-this step can be simplified to a simple matrix addition $rho_h + S_h$, where
-$rho_h$ is the density field on the discretized domain, and $S_h$ is the matrix
-containing the sources at each grid cell.
+density field. For a rectangular grid this step can be simplified to a simple
+matrix addition $rho_h + S_h$, where $rho_h$ is the density field on the
+discretized domain, and $S_h$ is the matrix containing the sources at each grid
+cell.
 
 == Diffusion
-The diffusion step boils down to solving the following simple equation
+During the diffusion step of the simulation we must solve the following equation
 $
   (partial rho)/(partial t) = kappa Delta rho.
 $
@@ -81,14 +81,14 @@ $
 $
 #numbered_eq(
   $
-    rho_"next" = rho_"prev" + (Delta t) kappa Delta rho_"prev"
+    rho_"next" = rho_"prev" + (Delta t) kappa Delta rho_"prev".
   $
 )<eq:helmholtz>
 
-The resulting @eq:helmholtz is a Helmholtz equation, of the form
-$
-  Delta u + lambda u = f.
-$
+// The resulting @eq:helmholtz is a Helmholtz equation, of the form
+// $
+//   Delta u + lambda u = f.
+// $
 
 To solve this, we are going to employ the most intuitive method, known as the
 finite difference method, where we think of the density moving outwards from
@@ -134,28 +134,14 @@ exchange between the neighboring cells.
   )<fig:5-point-stencil-intuition>
 ]
 
+
 In a more formal sense, what this method does is it approximates the Laplacian
-$Delta u$ with two second order finite difference schemes as
+$Delta rho$ with two second order finite difference schemes as
 $
   (Delta_h rho_h)_(i, j) = (rho_(i+1, j) + rho_(i-1, j) + rho_(i, j+1) + rho_(i, j-1) - 4rho_(i,j))/(h^2),
 $
-where $h$ is the mesh fineness, that is $h = 1/N$.
-
-The above equations for $i$ and $j$ indices define a linear system of equations
-$A_h rho_h = f_h$, where $A_h$ is the discretization of the Laplacian and $f_h$
-is the density field from the previous time step, and $h$ is the fineness of the grid, that is $h = 1/N$.
-
-To solve a linear system of equations one can solve it exactly with various
-approaches, however, this will not suffice for us, as all the exact methods are
-too slow for our needs. One can prove sufficient properties of the
-discretization matrix that imply that an iterative method, such as
-Gauss--Seidel will converge rapidly to the exact solution, saving us precious
-time at the cost of exactness. We present an illustration of the $A_h$
-discretization matrix in @fig:5-point-stencil-matrix.
-
-There are many other iterative methods for solving a linear system of equations
-of this kind, of which the multi grid method achieves the theoretically optimal
-complexity, however, this method often ends up being slower for coarser grids. The mothod that is most often used in the most efficient Poisson solvers is the generalized Buneman method, described in @genbun.
+where $h$ is the mesh fineness, that is $h = 1/N$. We present an illustration
+of the $Delta_h$ discrete Laplacian in @fig:5-point-stencil-matrix.
 
 #align(center)[
   #figure(
@@ -204,20 +190,22 @@ complexity, however, this method often ends up being slower for coarser grids. T
   )<fig:5-point-stencil-matrix>
 ]
 
-// Let us denote the Kronecker product of two matrices as $A times.circle B$ and
-// let $B = "tridiag"(-1, 2, -1)$. Then, the above matrix can be achieved with the
-// following succinct formula: $I times.circle B + B times.circle I$.
+The previous discretization reduces @eq:helmholtz to a linear system of
+equations of the form $A_h rho_h = f_h$.
 
-However, this matrix is so sparse, that we need not even construct it, as we
-can just solve the resulting linear system of equations with an iterative
-method without constructing the full matrix.
+There are many ways to solve linear systems of this form, each of which has
+it's advantages and disadvantages. Since our goal is to simulate realistic
+fluid behavior in real time, at the expense of exactness, we will opt to use an
+iterative method, like the Gauss--Seidel method, which is fast but not exact.
 
-Note, that the previously described finite difference method was for the
-Poisson equation, however, one can easily adjust it to include the extra term
-in the @eq:helmholtz equation.
+Note, that we only mentioned the matrix of the discrete Laplacian. However,
+must not forget about the linear part of @eq:helmholtz, but this can be easily
+taken care of with a slight modification of the discretization matrix $A_h$.
 
 For a more extensive treatment of the subject, the reader is advised to consult
-section 2.2 of @karatsonelliptikus.
+section 2.2 of @karatsonelliptikus for deeper theoretical background, or
+#link("https://github.com/leonardo-toffalini/fishy") for implementation
+details.
 
 == Advection
 For the advection step, we must solve the following equation
@@ -227,14 +215,14 @@ $
 The tricky part with solving the advection step is that it is dependent on the
 velocity field, thus one must think of something clever to handle this difficulty.
 
-The following novel idea that @stam2003real presents, is to think about 
-fluid particles moving along the velocity field. We must think of our density
-grid as point masses centered at the middle of each cell, then tracing said
-point masses along the velocity field. The problem with said method, is that it
-will be unstable, to remedy this, one often reformulates the method as an
-implicit method to make it stable. This simply means that instead of tracing
-the particles forwards along the velocity field, on must trace back the origin
-of each particle that ended up in the center of a grid cell. @fig:path-trace-back
+The following novel idea that @stam2023stable and @stam2003real present, is to
+think about fluid particles moving along the velocity field. We must think of
+our density grid as point masses centered at the middle of each cell, then
+tracing said point masses along the velocity field. The problem with said
+method, is that it will be unstable for certain parameters. However, we can fix
+this issue by instead of tracing the particles forwards along the velocity, we
+trace them back through time. This simply means that we trace back the origin of
+each particle that ended up in the center of a grid cell. @fig:path-trace-back
 provides visual understanding for the backwards path tracing.
 
 After tracing back the possible locations where fluid particles could have come
@@ -245,10 +233,10 @@ center then we must somehow give meaning to it too. In this case we will take
 the linear interpolation of the four closest neighbors of where the particle
 came from.
 
-Fluid simulation methods that solve a partial differential equation on a
-discretized space are called Eulerian, whereas methods that simulate fluids
-as a collection of interacting particles are called Lagrangian. For this reason
-this method is sometimes called a semi-Lagrangian method.
+// Fluid simulation methods that solve a partial differential equation on a
+// discretized space are called Eulerian, whereas methods that simulate fluids
+// as a collection of interacting particles are called Lagrangian. For this reason
+// this method is sometimes called a semi-Lagrangian method.
 #align(center)[
   #figure(
     cetz.canvas({

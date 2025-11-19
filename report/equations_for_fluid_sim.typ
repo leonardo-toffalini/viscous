@@ -7,8 +7,8 @@ and realistic visuals as opposed to precise measurements useful for engineering
 efforts.
 
 For our purposes we will rearrange @eq:navier-stokes such that we have only the
-time derivate of the velocity on the left and omit the internal force part, as
-we will recover this part later. So we arrive at the equation which we will solve:
+time derivate of the velocity on the left, and omit the internal force part, as
+we will recover it later. So we arrive at the equation which we will solve:
 
 $
   (partial bold(u))/(partial t) = - (bold(u) dot nabla)bold(u) + nu Delta
@@ -27,14 +27,14 @@ where $kappa$ is the diffusion coefficient of the fluid and $S$ is a scalar
 field of external sources.
 
 The astute reader might find this equation quite similar to that of the
-velocity field, which is by no means a coincidence as the same broad strokes apply
-to the density field too, which are: advection, diffusion, and external sources.
-The only thing we must be careful of, is that the density is a scalar field, in
-contrast to the velocity, which is a vector field.
+velocity field, which is by no means a coincidence, as the derivation of the
+density equation follows from the same physical laws, that resulted in the
+velocity equation. The only part that we must be mindful of, is that the
+density field's advection is dependent on the velocity field.
 
-The partial differential equation by itself does not result in a unique
+The previous system of partial differential equations by itself does not result in a unique
 solution for us to find, for this we must also specify a boundary condition.
-In our endeavor to simulate a fluid, we will work with the Dirichlet-boundary
+In our endeavor to simulate a fluid, we will work with the homogenous Dirichlet boundary
 condition, which prescribes that the values on the boundary must vanish. We can
 formulate the previous statement as follows:
 $
@@ -42,4 +42,5 @@ $
   rho|_(partial Omega) &= 0,
 $
 where $Omega$ represents the domain on which we are searching for the solution.
+Simply meaning that the density and the velocity must not escape the domain.
 

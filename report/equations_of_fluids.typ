@@ -6,8 +6,9 @@ with uniform viscosity are as follows:
 
 #set math.equation(numbering: "(1)")
 $
-  (partial bold(u))/(partial t) + (bold(u) dot nabla) bold(u) = nu Delta
-bold(u) - 1/rho nabla p + 1/rho bold(f),
+  (partial bold(u))/(partial t) + (bold(u) dot nabla) bold(u) &= nu Delta
+  bold(u) - 1/rho nabla p + 1/rho bold(f) \
+  nabla dot u &= 0
 $<eq:navier-stokes>
 #set math.equation(numbering: none)
 where
@@ -21,7 +22,8 @@ We will not go into the details of deriving the above equations, instead we
 will just take it as granted that they truly formulate the evolving velocity of
 a viscous incompressible fluid.
 
-Explanation of the different parts of @eq:navier-stokes:
+For us to later simulate @eq:navier-stokes we need to understand what each part
+is responsible for.
 $
   (partial bold(u))/(partial t) + overbrace((bold(u) dot nabla) bold(u),
   "Advection") = underbrace(nu Delta bold(u), "Diffusion") overbrace(- 1/rho

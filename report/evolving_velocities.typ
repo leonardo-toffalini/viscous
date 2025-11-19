@@ -1,38 +1,34 @@
 #import "@preview/cetz:0.4.2"
 
 = Evolving velocities
-#text(red)[*TODO*] Make it clear that this is the second crucial idea of the
-method.
+Recall, that the velocity equation is almost the same as the density equation,
+thus, the method is almost complete. However, we need to recover the *internal
+source* part of the velocity equation, which we omitted in the second section.
 
-Recall, that the velocity equation is almost the same as the density equation.
-
-This is where the second novel idea comes into play. Remember in the second
-section we mentioned that we shall omit a part of the equation to make it
-simpler and handle it later, now is the time to do so. The part we left out
-made sure that the velocity field was divergence free, meaning that it was mass
-conserving. This is intuitive about fluids, that a fluid can not just fluid
-outward from a single point, if some fluid flows out from a point, then an
-equal amount must flow into said point.
+This is where the second novel idea comes into play. The part we left out made
+sure that the velocity field was divergence free, that is $nabla dot u = 0$,
+meaning that it was mass conserving. This is intuitive for incompressible
+fluids, that a fluid can not just appear at a single point, if some
+fluid flows in to a point, then an equal amount must flow out from said point.
 
 Since we did not take care to hold the divergence free property during the
-diffusion and advection steps we quite possible end up with a velocity field
-which has non zero divergence. To combat this we rely on a result from vector
-calculus which states that a vector field can be decomposed as a sum of a field
-with no divergence and one which is the gradient of a scalar potential. This
-result is called the Helmholtz--Hodge decomposition.
+diffusion and advection steps we quite possibly ended up with a velocity field
+which has non zero divergence. To combat this we rely on a result called the
+Helmholtz--Hodge decomposition from vector calculus, which states that a vector
+field can be decomposed as a sum of a field with no divergence and one which is
+the gradient of a scalar potential.
 
-#include "hodge.typ"
-
-The Helmholtz--Hodge decomposition states that any vector field $bold(w)$ can
-be uniquely decomposed into the sum of a divergence field and a rotation field,
-more concisely
+Formally, the Helmholtz--Hodge decomposition states that any vector field $bold(w)$ can
+be uniquely decomposed into the sum of a divergence field $nabla q$ and a
+rotation field $bold(u)$, more concisely
 $
   bold(w) = bold(u) + nabla q,
 $
-where $nabla dot (bold(u)) = 0$, and $q$ is a scalar field. @fig:hodge
+where $nabla dot bold(u) = 0$, and $q$ is a scalar field. @fig:hodge
 illustrates the idea of the decomposition.
 
-Formally taking the dot product with the $nabla$ operator of both sides, we get
+Finding such a decomposition is almost as simple as stating the result, we only
+need to take the dot product with the $nabla$ operator of both sides, to get
 $
   nabla dot bold(w) &= nabla dot bold(u) + nabla dot nabla q \
   nabla dot bold(w) &= 0 + nabla dot nabla q \
@@ -41,17 +37,19 @@ $
 
 The relation between $bold(w)$ and $q$ we just derived is a simple Poisson
 equation for $q$, which can be solved with the finite difference method we
-outlined in the previous section. After solving for $q$, we can extract
+outlined in the diffusion section. After solving for $q$, we can extract
 $bold(u)$ as
 $
   bold(u) = bold(w) - nabla q.
 $
 
+#include "hodge.typ"
+
 With this result in our hands we can finally resolve the mass conserving
 property of the velocity of the simulated fluid by decomposing the resulting
 field after the last step into a divergence free field.
 
-One can then imagine the simulation steps as follows:
+In summary, one can then imagine the simulation steps as follows:
 $
   u_1 -->^"add source" u_2 -->^"diffusion" u_3 -->^"advection" u_4 -->^"projection" u_5
 $

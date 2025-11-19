@@ -19,8 +19,6 @@
   Toffalini Leonardo
 ]
 
-#text(red)[*FIRST DRAFT*]
-
 #include "notation.typ"
 
 #include "equations_of_fluids.typ"
