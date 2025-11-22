@@ -10,6 +10,9 @@ All the code can be found at #link("https://github.com/leonardo-toffalini/viscou
   figure(image("vortex_shredding.png", width: 93%), caption: [
     Laminar flow encountering a solid ibject, resulting in vortex shredding.
   ]), <fig:vortex_shredding>,
+  figure(image("fire_screenshot.png", width: 93%), caption: [
+    Flickering fire.
+  ]), <fig:vortex_shredding>,
   columns: (1fr, 1fr),
   caption: [Screenshots from the fluid simulation.],
   label: <fig:screenshots>,
