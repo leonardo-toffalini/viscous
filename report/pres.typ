@@ -545,7 +545,9 @@ $
 = Appendix
 
 == Appendix
-#link("https://github.com/leonardo-toffalini/viscous")
+- #link("https://github.com/leonardo-toffalini/viscous")
+
+- #link("https://github.com/leonardo-toffalini/fishy")
 
 ---
 
@@ -559,6 +561,13 @@ $
 #figure(
   image("vortex_shredding.png", width: 42%),
   caption: [Vortex shredding]
+)
+
+---
+
+#figure(
+  image("fire_screenshot.png", width: 42%),
+  caption: [Flickering fire]
 )
 
 #bibliography("refs.bib", full: true)
