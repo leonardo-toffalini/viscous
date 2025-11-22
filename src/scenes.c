@@ -2,12 +2,12 @@
 
 typedef enum {
   SCENE_DEFAULT = 0,
-  SCENE_HIGH_DIFFUSION = 1,
-  SCENE_LOW_VISCOSITY = 2,
-  SCENE_TURBULENT = 3,
-  SCENE_SMOKE = 4,
-  SCENE_EMPTY = 5,
-  SCENE_RAYLEIGH_BENARD_CONVECTION = 6, // https://en.wikipedia.org/wiki/Rayleigh%E2%80%93B%C3%A9nard_convection
+  SCENE_FIRE,
+  SCENE_LOW_VISCOSITY,
+  SCENE_TURBULENT,
+  SCENE_SMOKE,
+  SCENE_EMPTY,
+  SCENE_RAYLEIGH_BENARD_CONVECTION, // https://en.wikipedia.org/wiki/Rayleigh%E2%80%93B%C3%A9nard_convection
   SCENE_COUNT
 } SceneType;
 
@@ -59,10 +59,12 @@ void setup_scene_default(SceneParams *params) {
   params->initial_v_velocity = 0.2f;
 }
 
-void setup_scene_high_diffusion(SceneParams *params) {
+void setup_scene_fire(SceneParams *params) {
   setup_scene_default(params);
-  params->diff = 1e-3f;
+  params->diff = 1.3e-3f;
   params->middle_source_value = 6.0f;
+  params->initial_u_velocity = -1.5f;
+  params->initial_v_velocity = 0.1f;
 }
 
 void setup_scene_low_viscosity(SceneParams *params) {
@@ -106,8 +108,8 @@ void setup_scene(SceneParams *params, SceneType scene_type) {
     case SCENE_DEFAULT:
       setup_scene_default(params);
       break;
-    case SCENE_HIGH_DIFFUSION:
-      setup_scene_high_diffusion(params);
+    case SCENE_FIRE:
+      setup_scene_fire(params);
       break;
     case SCENE_LOW_VISCOSITY:
       setup_scene_low_viscosity(params);

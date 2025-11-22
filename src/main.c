@@ -2,8 +2,6 @@
 // - add a switch such that if someone is running without nvidia gpu the computations default to cpu
 // - implement advect and project in cuda
 // - probably should do something about the possibility when there are less threads than cells in the array
-// - add more boundary cells, objects in the scene to interact with
-// - currently, it defaults to cuda if not on mac, instead it should default to cuda if it has nvcc
 // - could probably put the main game loop part of the scenes into a function
 // and store a pointer to that function in the scene params struct
 
@@ -14,6 +12,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #define N_ 200
 #define ROWS 200
@@ -30,13 +29,18 @@
 #define CUDA_AVAILABLE 0
 
 // Scene selection - change this to switch scenes
-#define SELECTED_SCENE SCENE_SMOKE
+#define SELECTED_SCENE SCENE_FIRE
+
+// Coormap selection
+#define CMAP APPLE
 
 // contains all the logic for the simulation
 #include "engine.c"
 
 // contains all the logic for setting up the predefined scenes
 #include "scenes.c"
+
+#include "colormap.h"
 
 void keyboard_callback(SceneParams params);
 void click_callback(float *dens_prev, float *u_prev, SceneParams params);
@@ -72,8 +76,9 @@ int main(void) {
 
   Texture2D texture = LoadTextureFromImage(img);
 
-  // convert red channel only color to something else
-  Shader colorShader = LoadShader(NULL, "src/shaders/hot_cold.frag");
+  char cmap_buf[100];
+  get_cmap(CMAP, cmap_buf);
+  Shader colorShader = LoadShader(NULL, cmap_buf);
 
 
   SetTargetFPS(MAX_FPS);
@@ -92,17 +97,28 @@ int main(void) {
       static float time_accumulator = 0.0f;
       time_accumulator += dt;
       
-      // even with no horizontal variation it looks smoke-like
-      float horizontal_variation = 0.0f; // 0.1f * sinf(time_accumulator * 0.5f);
       u[IX(center, center)] = params.initial_u_velocity;
-      v[IX(center, center)] = horizontal_variation;
       
       // Add some velocity to nearby cells for smoother flow
       u[IX(center, center-1)] = params.initial_u_velocity * 0.8f;
       u[IX(center, center+1)] = params.initial_u_velocity * 0.8f;
-      v[IX(center-1, center)] = horizontal_variation * 0.5f;
-      v[IX(center+1, center)] = horizontal_variation * 0.5f;
-    } else if (SELECTED_SCENE == SCENE_RAYLEIGH_BENARD_CONVECTION) {
+    } else if (SELECTED_SCENE == SCENE_FIRE) {
+      for (int ioff = -(int)params.source_radius; ioff <= (int)params.source_radius; ioff++) {
+        for (int joff = -(int)params.source_radius; joff <= (int)params.source_radius; joff++) {
+          dens_prev[IX(params.N/2 + ioff, params.N/2 + joff)] = params.middle_source_value;
+        }
+      }
+      u[IX(params.N/2, params.N/2)] = params.initial_u_velocity;
+      v[IX(params.N/2, params.N/2)] = params.initial_v_velocity;
+
+      static float time_accumulator = 0.0f;
+      time_accumulator += dt;
+      int center = params.N / 2;
+      float horizontal_variation = 0.1f * sinf(time_accumulator * 1.5f + sinf(time_accumulator));
+      v[IX(center-1, center)] += horizontal_variation * 1.5f;
+      v[IX(center+1, center)] += horizontal_variation * 1.5f;
+    }
+    else if (SELECTED_SCENE == SCENE_RAYLEIGH_BENARD_CONVECTION) {
       static float time_accumulator = 0.0f;
       time_accumulator += dt;
 
