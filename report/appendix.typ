@@ -8,7 +8,7 @@ All the code can be found at #link("https://github.com/leonardo-toffalini/viscou
     Smoke from emitting from the tip of a cigarette.
   ]), <fig:smoke>,
   figure(image("vortex_shredding.png", width: 93%), caption: [
-    Laminar flow encountering a solid ibject, resulting in vortex shredding.
+    Laminar flow encountering a solid ibject, resulting in vortex shedding.
   ]), <fig:vortex_shredding>,
   figure(image("fire_screenshot.png", width: 93%), caption: [
     Flickering fire.

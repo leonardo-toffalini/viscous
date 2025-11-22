@@ -560,7 +560,7 @@ $
 
 #figure(
   image("vortex_shredding.png", width: 42%),
-  caption: [Vortex shredding]
+  caption: [Vortex shedding]
 )
 
 ---
