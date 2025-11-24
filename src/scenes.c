@@ -13,7 +13,7 @@ typedef enum {
 
   const char* scene_names[] = {
     "Default",
-    "High Diffusion",
+    "Fire",
     "Low Viscosity",
     "Turbulent",
     "Smoke",

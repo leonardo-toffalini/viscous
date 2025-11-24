@@ -1,0 +1,21 @@
+default:
+  @just --list
+
+smoke:
+  make CMAP=GRAYS SELECTED_SCENE=SCENE_SMOKE CUDA_AVAILABLE=0 -j8 && bin/Debug/viscous
+
+fire:
+  make CMAP=APPLE SELECTED_SCENE=SCENE_FIRE CUDA_AVAILABLE=0 -j8 && bin/Debug/viscous
+
+empty:
+  make CMAP=APPLE SELECTED_SCENE=SCENE_EMPTY CUDA_AVAILABLE=0 -j8 && bin/Debug/viscous
+
+turbulent:
+  make CMAP=INFERNO SELECTED_SCENE=SCENE_TURBULENT CUDA_AVAILABLE=0 -j8 && bin/Debug/viscous
+
+low_viscosity:
+  make CMAP=INFERNO SELECTED_SCENE=SCENE_LOW_VISCOSITY CUDA_AVAILABLE=0 -j8 && bin/Debug/viscous
+
+rb_convection:
+  make CMAP=PLASMA SELECTED_SCENE=SCENE_RAYLEIGH_BENARD_CONVECTION CUDA_AVAILABLE=0 -j8 && bin/Debug/viscous
+

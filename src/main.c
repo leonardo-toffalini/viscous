@@ -26,14 +26,22 @@
 #endif
 
 // change this value to 1 if you are on a machine with and NVIDIA graphics card and you have the CUDA tools downloaded
+#ifndef CUDA_AVAILABLE
+#ifndef CUDA_AVAILABLE
 #define CUDA_AVAILABLE 0
+#endif
+#endif
 
 // Scene selection - change this to switch scenes
+#ifndef SELECTED_SCENE
+#ifndef SELECTED_SCENE
 #define SELECTED_SCENE SCENE_FIRE
+#endif
+#endif
 
 // coormap selection, see colormap.h for options
 #ifndef CMAP
-#define CMAP INFERNO
+#define CMAP APPLE
 #endif
 
 // contains all the logic for the simulation
@@ -204,7 +212,7 @@ void drag_callback(SceneParams params, float *u_prev, float *v_prev) {
     // DrawLine(last_x, last_y, xpos, ypos, RED);
 
     pos p = mouse_pos_to_index(params.rows+2, params.cols+2, params.scale);
-    // add source to dens
+    // add source to u and v
     for (int ioff = -force_radius; ioff < force_radius; ioff++)
       for (int joff = -force_radius; joff < force_radius; joff++) {
         u_prev[IX(p.i + ioff, p.j + joff)] += yoffset * force_magnitude;

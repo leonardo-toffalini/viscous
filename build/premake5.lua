@@ -208,6 +208,15 @@ cppdialect("C++17")
 flags({ "ShadowedVariables" })
 platform_defines()
 
+-- Allow passing CMAP via Make: only add define if CMAP is set
+filter("action:gmake*")
+-- Ensure macro values flow from `make CMAP=... SELECTED_SCENE=... CUDA_AVAILABLE=...`
+defines({ "CMAP=$(CMAP)"})
+defines({ "SELECTED_SCENE=$(SELECTED_SCENE)"})
+defines({ "CUDA_AVAILABLE=$(CUDA_AVAILABLE)"})
+-- Put objects in a dir keyed by these values so changes trigger rebuilds
+objdir("%{prj.location}/obj/%{cfg.platform}/%{cfg.buildcfg}/%{prj.name}/cmap_$(CMAP)_scene_$(SELECTED_SCENE)_cuda_$(CUDA_AVAILABLE)")
+
 filter("action:vs*")
 defines({ "_WINSOCK_DEPRECATED_NO_WARNINGS", "_CRT_SECURE_NO_WARNINGS" })
 dependson({ "raylib" })
