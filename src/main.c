@@ -44,6 +44,10 @@
 #define CMAP APPLE
 #endif
 
+#ifndef SOURCE_RADIUS
+#define SOURCE_RADIUS 1
+#endif
+
 // contains all the logic for the simulation
 #include "engine.c"
 
@@ -61,7 +65,7 @@ float last_x = 800.0f / 2;
 float last_y = 800.0f / 2;
 float force_magnitude = 0.8f;
 int force_radius = 3;
-int source_radius = 1;
+int source_radius = SOURCE_RADIUS;
 
 int main(void) {
   SceneParams params;
@@ -189,9 +193,10 @@ void click_callback(float *dens_prev, float *u_prev, SceneParams params) {
   if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
     pos p = mouse_pos_to_index(params.rows+2, params.cols+2, params.scale);
     // add source to dens
-    for (int ioff = -source_radius; ioff < source_radius; ioff++)
-      for (int joff = -source_radius; joff < source_radius; joff++)
-        dens_prev[IX(p.i + ioff, p.j + joff)] += 10.0f;
+    for (int ioff = -source_radius; ioff <= source_radius; ioff++)
+      for (int joff = -source_radius; joff <= source_radius; joff++)
+        if (ioff*ioff + joff*joff <= source_radius*source_radius)
+          dens_prev[IX(p.i + ioff, p.j + joff)] += 10.0f;
   }
 }
 

@@ -214,8 +214,9 @@ filter("action:gmake*")
 defines({ "CMAP=$(CMAP)"})
 defines({ "SELECTED_SCENE=$(SELECTED_SCENE)"})
 defines({ "CUDA_AVAILABLE=$(CUDA_AVAILABLE)"})
+defines({ "SOURCE_RADIUS=$(SOURCE_RADIUS)"})
 -- Put objects in a dir keyed by these values so changes trigger rebuilds
-objdir("%{prj.location}/obj/%{cfg.platform}/%{cfg.buildcfg}/%{prj.name}/cmap_$(CMAP)_scene_$(SELECTED_SCENE)_cuda_$(CUDA_AVAILABLE)")
+objdir("%{prj.location}/obj/%{cfg.platform}/%{cfg.buildcfg}/%{prj.name}/cmap_$(CMAP)_scene_$(SELECTED_SCENE)_cuda_$(CUDA_AVAILABLE)_source_radius_$(SOURCE_RADIUS)")
 
 filter("action:vs*")
 defines({ "_WINSOCK_DEPRECATED_NO_WARNINGS", "_CRT_SECURE_NO_WARNINGS" })
