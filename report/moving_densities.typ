@@ -245,7 +245,7 @@ came from.
       let step = 1
       let start = -3
       let values = range(0, int(2 * calc.abs(start) / step)).map(x => start + x * step)
-      grid((start, start), (-start, -start), step: step)
+      grid((start, start), (-start, -start), step: step, stroke: 0.6pt)
 
       for i in values {
         for j in values {
@@ -253,8 +253,9 @@ came from.
           let x = j + step/2
           let u = y/4
           let v = -x/4
+          circle((x, y), radius: 1.5pt, stroke: 0pt, fill: blue)
           line((x, y), (x + u, y + v),
-            stroke: gray + 0.4pt,
+            stroke: gray + 0.5pt,
             mark: (end: ">", scale: 0.6))
         }
       }
@@ -263,17 +264,19 @@ came from.
       let (a2, b2, c2) = ((-0.5, 1.5), (-1.4, 0.9), (-1.1, 1.6))
       let (a3, b3, c3) = ((-1.5, 1.5), (-2.1, 0.5), (-1.95, 1.3))
 
+      let c = orange
+
       bezier(a1, b1, c1,
-        stroke: black + 1.5pt,
-        mark: (start: "o", end: ">", scale: 0.6)
+        stroke: c + 1.5pt,
+        mark: (end: ">", scale: 0.6)
       )
       bezier(a2, b2, c2,
-        stroke: black + 1.5pt,
-        mark: (start: "o", end: ">", scale: 0.6)
+        stroke: c + 1.5pt,
+        mark: (end: ">", scale: 0.6)
       )
       bezier(a3, b3, c3,
-        stroke: black + 1.5pt,
-        mark: (start: "o", end: ">", scale: 0.6)
+        stroke: c + 1.5pt,
+        mark: (end: ">", scale: 0.6)
       )
 
 

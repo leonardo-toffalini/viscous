@@ -2,14 +2,16 @@
 
 = Evolving velocities
 Recall, that the velocity equation is almost the same as the density equation,
-thus, the method is almost complete. However, we need to recover the *internal
-source* part of the velocity equation, which we omitted in the second section.
+thus, the method is almost complete as we can apply the previous diffusion and
+advection steps to the velocity field too. However, we need to recover the
+*internal source* part of the velocity equation, which we omitted in the second
+section.
 
 This is where the second novel idea comes into play. The part we left out made
 sure that the velocity field was divergence free, that is $nabla dot u = 0$,
-meaning that it was mass conserving. This is intuitive for incompressible
-fluids, that a fluid can not just appear at a single point, if some
-fluid flows in to a point, then an equal amount must flow out from said point.
+meaning that the velocity field was mass conserving. This is intuitive for
+incompressible fluids, meaning that if some fluid flows in to a point, then an
+equal amount must flow out from said point.
 
 Since we did not take care to hold the divergence free property during the
 diffusion and advection steps we quite possibly ended up with a velocity field
@@ -35,10 +37,11 @@ $
   nabla dot bold(w) &= Delta q
 $
 
-The relation between $bold(w)$ and $q$ we just derived is a simple Poisson
-equation for $q$, which can be solved with the finite difference method we
-outlined in the diffusion section. After solving for $q$, we can extract
-$bold(u)$ as
+Since $bold(w)$ is known to us, we can calculate it's divergence, making the
+left hand side some fixed value. Thus, the relation between $bold(w)$ and $q$
+we just derived is a simple Poisson equation for $q$, which can be solved with
+the finite difference method we outlined in the diffusion section. After
+solving for $q$, we can extract $bold(u)$ as
 $
   bold(u) = bold(w) - nabla q.
 $
@@ -49,7 +52,7 @@ With this result in our hands we can finally resolve the mass conserving
 property of the velocity of the simulated fluid by decomposing the resulting
 field after the last step into a divergence free field.
 
-In summary, one can then imagine the simulation steps as follows:
+In summary, one can then imagine the simulation steps for the velocity field as follows:
 $
   u_1 -->^"add source" u_2 -->^"diffusion" u_3 -->^"advection" u_4 -->^"projection" u_5
 $

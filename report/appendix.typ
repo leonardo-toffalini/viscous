@@ -1,11 +1,12 @@
 #import "@preview/subpar:0.2.2"
+#import "@preview/lovelace:0.3.0": *
 
 = Appendix
 All the code can be found at #link("https://github.com/leonardo-toffalini/viscous")
 
 #subpar.grid(
   figure(image("smoke_screenshot.png", width: 90%), caption: [
-    Smoke from emitting from the tip of a cigarette.
+    Smoke emitting from the tip of a cigarette.
   ]), <fig:smoke>,
   figure(image("vortex_shredding.png", width: 93%), caption: [
     Laminar flow encountering a solid ibject, resulting in vortex shedding.
@@ -17,3 +18,16 @@ All the code can be found at #link("https://github.com/leonardo-toffalini/viscou
   caption: [Screenshots from the fluid simulation.],
   label: <fig:screenshots>,
 )
+
+== Pseudocode for the simulation steps
+#pseudocode-list[
+  + *while* simulating
+    + add_source(velocity_field)
+    + diffuse(velocity_field)
+    + advect(velocity_field)
+    + project(velocity_field)
+    + add_source(density_field)
+    + diffuse(density_field)
+    + advect(density_field)
+  + *end*
+]

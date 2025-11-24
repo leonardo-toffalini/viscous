@@ -61,8 +61,9 @@ $
 = Equations of fluids
 == Navier--Stokes equations
 $
-  (partial bold(u))/(partial t) + (bold(u) dot nabla) bold(u) = nu Delta
-bold(u) - 1/rho nabla p + 1/rho bold(f)
+  (partial bold(u))/(partial t) + (bold(u) dot nabla) bold(u) &= nu Delta
+bold(u) - 1/rho nabla p + 1/rho bold(f) \
+  nabla dot u &= 0
 $
 #pause
 
@@ -335,7 +336,7 @@ $
     grid((start, start), (-start, -start), step: step)
     for i in values {
       for j in values {
-        circle((i + step / 2, j + step / 2), radius: 2pt, fill: black)
+        circle((i + step / 2, j + step / 2), radius: 2pt, stroke: 0pt, fill: blue)
       }
     }
   })
@@ -359,6 +360,16 @@ $
       for j in values {
         let y = i + step/2
         let x = j + step/2
+        circle((x, y), radius: 1.5pt, stroke: 0pt, fill: blue)
+      }
+    }
+
+    (pause,)
+
+    for i in values {
+      for j in values {
+        let y = i + step/2
+        let x = j + step/2
         let u = y/4
         let v = -x/4
         line((x, y), (x + u, y + v),
@@ -373,17 +384,19 @@ $
     let (a2, b2, c2) = ((-0.5, 1.5), (-1.4, 0.9), (-1.1, 1.6))
     let (a3, b3, c3) = ((-1.5, 1.5), (-2.1, 0.5), (-1.95, 1.3))
 
+    let c = orange
+
     bezier(a1, b1, c1,
-      stroke: black + 2.5pt,
-      mark: (start: "o", end: ">", scale: 0.6)
+      stroke: c + 2.5pt,
+      mark: (end: ">", scale: 0.6)
     )
     bezier(a2, b2, c2,
-      stroke: black + 2.5pt,
-      mark: (start: "o", end: ">", scale: 0.6)
+      stroke: c + 2.5pt,
+      mark: (end: ">", scale: 0.6)
     )
     bezier(a3, b3, c3,
-      stroke: black + 2.5pt,
-      mark: (start: "o", end: ">", scale: 0.6)
+      stroke: c + 2.5pt,
+      mark: (end: ">", scale: 0.6)
     )
   })
 ]
