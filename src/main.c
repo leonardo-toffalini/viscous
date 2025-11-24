@@ -31,8 +31,10 @@
 // Scene selection - change this to switch scenes
 #define SELECTED_SCENE SCENE_FIRE
 
-// Coormap selection
-#define CMAP APPLE
+// coormap selection, see colormap.h for options
+#ifndef CMAP
+#define CMAP INFERNO
+#endif
 
 // contains all the logic for the simulation
 #include "engine.c"
@@ -76,9 +78,21 @@ int main(void) {
 
   Texture2D texture = LoadTextureFromImage(img);
 
-  char cmap_buf[100];
-  get_cmap(CMAP, cmap_buf);
-  Shader colorShader = LoadShader(NULL, cmap_buf);
+  // char cmap_buf[100];
+  // get_cmap(CMAP, cmap_buf);
+  // Shader color_shader = LoadShader(NULL, cmap_buf);
+  Shader color_shader = LoadShader(NULL, "src/shaders/main.frag");
+
+  int colormap_loc = GetShaderLocation(color_shader, "colormap");
+  int colormap_size_loc = GetShaderLocation(color_shader, "colormap_size");
+  int reversed_loc = GetShaderLocation(color_shader, "reversed");
+  const vec3 *colormap;
+  int colormap_size;
+  int reversed;
+  get_colormap(CMAP, &colormap, &colormap_size, &reversed);
+  SetShaderValueV(color_shader, colormap_loc, colormap, SHADER_UNIFORM_VEC3, colormap_size);
+  SetShaderValue(color_shader, colormap_size_loc, &colormap_size, SHADER_UNIFORM_INT);
+  SetShaderValue(color_shader, reversed_loc, &reversed, SHADER_UNIFORM_INT);
 
 
   SetTargetFPS(MAX_FPS);
@@ -146,7 +160,7 @@ int main(void) {
     BeginDrawing();
     ClearBackground(BLACK);
     
-    BeginShaderMode(colorShader);
+    BeginShaderMode(color_shader);
     DrawTextureEx(texture, (Vector2){1, 1}, 0.0f, params.scale, WHITE);
     EndShaderMode();
     
@@ -156,7 +170,7 @@ int main(void) {
     EndDrawing();
   }
 
-  UnloadShader(colorShader);
+  UnloadShader(color_shader);
   UnloadTexture(texture);
   CloseWindow();
 
