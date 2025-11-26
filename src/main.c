@@ -26,27 +26,23 @@
 #endif
 
 // change this value to 1 if you are on a machine with and NVIDIA graphics card and you have the CUDA tools downloaded
-#ifndef CUDA_AVAILABLE
-#ifndef CUDA_AVAILABLE
-#define CUDA_AVAILABLE 0
-#endif
-#endif
+// #ifndef CUDA_AVAILABLE
+// #define CUDA_AVAILABLE 0
+// #endif
 
 // Scene selection - change this to switch scenes
-#ifndef SELECTED_SCENE
-#ifndef SELECTED_SCENE
-#define SELECTED_SCENE SCENE_FIRE
-#endif
-#endif
+// #ifndef SELECTED_SCENE
+// #define SELECTED_SCENE SCENE_SMOKE
+// #endif
 
 // coormap selection, see colormap.h for options
-#ifndef CMAP
-#define CMAP APPLE
-#endif
+// #ifndef CMAP
+// #define CMAP APPLE
+// #endif
 
-#ifndef SOURCE_RADIUS
-#define SOURCE_RADIUS 1
-#endif
+// #ifndef SOURCE_RADIUS
+// #define SOURCE_RADIUS 1
+// #endif
 
 // contains all the logic for the simulation
 #include "engine.c"
