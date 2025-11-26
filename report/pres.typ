@@ -554,6 +554,7 @@ $
   $
 ]
 
+#show: appendix
 
 = Appendix
 

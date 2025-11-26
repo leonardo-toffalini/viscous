@@ -1,10 +1,6 @@
-#import "@preview/thmbox:0.3.0": *
-#import "@preview/lilaq:0.5.0" as lq
-#import "@preview/cetz:0.4.2"
-#show: thmbox-init()
-
 #set text(font: "New Computer Modern Math")
 #set page(numbering: "1")
+#set heading(numbering: "1.")
 
 #show math.equation.where(block: false): box
 #set figure(gap: 1.5em)
