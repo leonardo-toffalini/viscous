@@ -16,7 +16,7 @@
 #show: university-theme.with(
   aspect-ratio: "16-9",
   // align: horizon,
-  // config-common(handout: true),
+  config-common(handout: true),
   // config-common(show-notes-on-second-screen: right),
   config-common(frozen-counters: (theorem-counter,)),  // freeze theorem counter for animation
   config-info(
@@ -113,8 +113,7 @@ $
 #pause
 
 $
-  u|_(partial Omega) &= 0 \
-  rho|_(partial Omega) &= 0
+  partial_nu u|_(partial Omega) &= 0
 $
 
 = Simulating fluids

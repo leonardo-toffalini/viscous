@@ -34,13 +34,12 @@ density field's advection is dependent on the velocity field.
 
 The previous system of partial differential equations by itself does not result in a unique
 solution for us to find, for this we must also specify a boundary condition.
-In our endeavor to simulate a fluid, we will work with the homogenous Dirichlet boundary
-condition, which prescribes that the values on the boundary must vanish. We can
+In our endeavor to simulate a fluid, we will work with the homogenous Neumann boundary
+condition, which prescribes that the normal derivatives on the boundary must vanish. We can
 formulate the previous statement as follows:
 $
-  u|_(partial Omega) &= 0 \
-  rho|_(partial Omega) &= 0,
+  partial_nu u|_(partial Omega) &= 0
 $
 where $Omega$ represents the domain on which we are searching for the solution.
-Simply meaning that the density and the velocity must not escape the domain.
+Simply meaning that the fluid must not escape the domain.
 

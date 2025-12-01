@@ -10,8 +10,8 @@ section.
 This is where the second novel idea comes into play. The part we left out made
 sure that the velocity field was divergence free, that is $nabla dot u = 0$,
 meaning that the velocity field was mass conserving. This is intuitive for
-incompressible fluids, meaning that if some fluid flows in to a point, then an
-equal amount must flow out from said point.
+incompressible fluids, that if some fluid flows in to a point, then an
+equal amount must flow out from that point.
 
 Since we did not take care to hold the divergence free property during the
 diffusion and advection steps we quite possibly ended up with a velocity field
@@ -34,7 +34,7 @@ need to take the dot product with the $nabla$ operator of both sides, to get
 $
   nabla dot bold(w) &= nabla dot bold(u) + nabla dot nabla q \
   nabla dot bold(w) &= 0 + nabla dot nabla q \
-  nabla dot bold(w) &= Delta q
+  nabla dot bold(w) &= Delta q.
 $
 
 Since $bold(w)$ is known to us, we can calculate it's divergence, making the

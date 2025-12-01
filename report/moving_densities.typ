@@ -57,7 +57,7 @@ simulation is running.
       content((6, 2.1), "Advection", anchor: "south")
     }),
 
-    caption: [Rough outline of the density solver]
+    caption: [Outline of the density solver.]
   )<fig:moving-density>
 ]
 
@@ -130,7 +130,7 @@ exchange between the neighboring cells.
       line((0.1, -0.5), (0.1, -2), stroke: semi_blue, mark: (end: ">", scale: 0.5, fill: semi_blue))
     }),
 
-    caption: [Density exchange]
+    caption: [Five point density exchange intuition.]
   )<fig:5-point-stencil-intuition>
 ]
 
@@ -186,7 +186,7 @@ of the $Delta_h$ discrete Laplacian in @fig:5-point-stencil-matrix.
 
     caption: [Discretization matrix of the Laplacian, where \
     #text(green)[*green*] $ = 4\/h^2$, #text(red)[*red*] $=-1\/h^2$,
-    #text(orange)[*orange*] $=-1\/h^2$]
+    #text(orange)[*orange*] $=-1\/h^2$.]
   )<fig:5-point-stencil-matrix>
 ]
 
@@ -218,7 +218,7 @@ velocity field, thus one must think of something clever to handle this difficult
 The following novel idea that @stam2023stable and @stam2003real present, is to
 think about fluid particles moving along the velocity field. We must think of
 our density grid as point masses centered at the middle of each cell, then
-tracing said point masses along the velocity field. The problem with said
+tracing said point masses along the velocity field. The problem with this
 method, is that it will be unstable for certain parameters. However, we can fix
 this issue by instead of tracing the particles forwards along the velocity, we
 trace them back through time. This simply means that we trace back the origin of
@@ -226,7 +226,7 @@ each particle that ended up in the center of a grid cell. @fig:path-trace-back
 provides visual understanding for the backwards path tracing.
 
 After tracing back the possible locations where fluid particles could have come
-from we might get a particle that came from not the exact center of a grid.
+from we might get a particle that came from not the exact center of a cell.
 Remember, that we established that we shall think of the fluid as point masses
 centered at the middle of the grid cells. If a particle came from not the exact
 center then we must somehow give meaning to it too. In this case we will take

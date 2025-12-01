@@ -1,11 +1,11 @@
 # Real time fluid dynamics simulation
 
-# Demos
+## Demos
 ![fire](https://github.com/user-attachments/assets/9b700970-e0c5-4b17-b8c4-888aef3ac5de)
 
 ![smoke](https://github.com/user-attachments/assets/cb60d817-117c-49ca-9615-e626285391ea)
 
-# Supported Platforms
+## Supported Platforms
 This project supports the main 3 desktop platforms:
 * Windows
 * Linux
